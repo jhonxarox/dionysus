@@ -14,4 +14,5 @@ urlpatterns = [
     path('table/', views.upload, name='table'),
     path('typography/', views.upload, name='typography'),
     path('icons/', views.upload, name='icons'),
+    path('alldata/', views.alldata, name='alldata'),
 ]

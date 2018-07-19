@@ -35,7 +35,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'CTIT_Check'
+    'CTIT_Check',
+    'mathfilters',
 ]
 
 MIDDLEWARE = [

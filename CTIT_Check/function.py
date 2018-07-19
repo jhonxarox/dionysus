@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import sqlalchemy as sa
+import math
 from datetime import datetime
 from .config import *
 
@@ -22,17 +23,37 @@ def connection_engine(connection_to_database):
 # Read CSV file
 def read_csv(csv_filename):
     raw_data = pd.read_csv(csv_filename)
+    raw_data = raw_data[['Attributed Touch Time',
+                         'Install Time',
+                         'Media Source',
+                         'Campaign',
+                         'Campaign ID',
+                         'Site ID',
+                         'AppsFlyer ID',
+                         'Platform',
+                         'Device Type',
+                         'App Version',
+                         'Is Retargeting',
+                         'Original URL',
+                         ]]
+    raw_data.reset_index(level=0, inplace=True)
+    raw_data = raw_data.rename(columns={'index': 'id'})
+    raw_data['CTIT Status'] = False
     return raw_data
 
 
 # CTIT Check on raw data
 def ctit_check(raw_data):
-    raw_data['CTIT Status'] = False
     for index, row in raw_data.iterrows():
-        attributeTouchTime = datetime.strptime(row['Attributed Touch Time'], '%Y-%m-%d %H:%M:%S')
-        installTime = datetime.strptime(row['Install Time'], '%Y-%m-%d %H:%M:%S')
+        if not isinstance(row['Attributed Touch Time'], str) and math.isnan(row['Attributed Touch Time']) :
+            installTime = datetime.strptime(row['Install Time'], '%Y-%m-%d %H:%M:%S')
+            attributeTouchTime = installTime - dt.timedelta(seconds = minimal_time)
+        else :
+            attributeTouchTime = datetime.strptime(row['Attributed Touch Time'], '%Y-%m-%d %H:%M:%S')
+            installTime = datetime.strptime(row['Install Time'], '%Y-%m-%d %H:%M:%S')
+
         time_reduce = installTime - attributeTouchTime
-        if time_reduce.total_seconds() < 21:
+        if time_reduce.total_seconds() < minimal_time:
             raw_data.at[index, 'CTIT Status'] = True
     return raw_data
 

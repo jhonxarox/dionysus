@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% block content %}
+		<!-- MAIN -->
+		<div class="main">
+			<!-- MAIN CONTENT -->
+			<div class="main-content">
+				<div class="container-fluid">
+					<h3 class="page-title">All Data</h3>
+                        <div class="panel panel-headline">
+							<div class="panel-heading">
+								<h3 class="panel-title">All Data</h3>
+							</div>
+							<div class="panel-body">
+								<table class="table table-condensed">
+									<thead>
+										<tr>
+											<th></th>
+											<th>AppFlyers ID</th>
+											<th>Media Source</th>
+											<th>Platform</th>
+											<th>Device Type</th>
+											<th>App Version</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% for datum in data %}
+											<tr>
+												{% if data.number == 1 %}
+												<td>{{ 	forloop.counter|mul:data.number }} </td>
+												{% else %}
+												<td>{{ 	data.number|mul:100|add:forloop.counter }} </td>
+												{% endif %}
+												<td>{{ datum.appsflyer_id }}</td>
+												<td>{{ datum.media_source }}</td>
+												<td>{{ datum.platform }}</td>
+												<td>{{ datum.device_type }}</td>
+												<td>{{ datum.app_version }}</td>
+											</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+								{% if data.has_previous %}
+										<a href="?page=1">&laquo; first</a>
+										<a href="?page={{ data.previous_page_number }}">previous</a>
+								{% endif %}
+
+								<span class="current">
+									Page {{ data.number }} of {{ data.paginator.num_pages }}
+								</span>
+
+								{% if data.has_next %}
+									<a href="?page={{ data.next_page_number }}">next</a>
+									<a href="?page={{ data.paginator.num_pages }}">last &raquo;</a>
+								{% endif %}
+							</div>
+						</div>
+				</div>
+			</div>
+		</div>
+			<!-- END MAIN CONTENT -->
+		<!-- END MAIN -->
+{% endblock %}
