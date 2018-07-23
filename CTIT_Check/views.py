@@ -35,9 +35,10 @@ def upload(request):
     con_engine = connection_engine(connection_to_database)
     raw_data = read_csv(csv_file)
     ctit_result = ctit_check(raw_data)
-    device_result = device_check(ctit_result)
+    device_result = device_check(ctit_result, con_engine)
+    data = app_version_check(device_result, con_engine)
     fraud_data = fraud_check(device_result)
-    insert_data_to_db(device_result, con_engine)
+    insert_data_to_db(data, con_engine)
     insert_fraud_to_db(fraud_data, con_engine)
     status = True
     return render(request, 'upload.html', {'status': status, 'message': "Upload Success"})
