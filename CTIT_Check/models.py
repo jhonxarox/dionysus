@@ -137,10 +137,10 @@ class Fraud(models.Model):
 
 
 class Install(models.Model):
-    index = models.BigIntegerField(blank=True, null=True)
-    id = models.BigIntegerField(primary_key=True)
-    attributed_touch_time = models.TextField(db_column='Attributed Touch Time', blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
-    install_time = models.TextField(db_column='Install Time', blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
+    index = models.BigAutoField()
+    id = models.BigAutoField(primary_key=True)
+    attributed_touch_time = models.DateTimeField(db_column='Attributed Touch Time', blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
+    install_time = models.DateTimeField(db_column='Install Time', blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
     media_source = models.TextField(db_column='Media Source', blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
     campaign = models.TextField(db_column='Campaign', blank=True, null=True)  # Field name made lowercase.
     campaign_id = models.TextField(db_column='Campaign ID', blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
@@ -153,6 +153,7 @@ class Install(models.Model):
     original_url = models.TextField(db_column='Original URL', blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
     ctit_status = models.NullBooleanField(db_column='CTIT Status')  # Field name made lowercase. Field renamed to remove unsuitable characters.
     device_status = models.NullBooleanField(db_column='Device Status')  # Field name made lowercase. Field renamed to remove unsuitable characters.
+    app_version_status = models.NullBooleanField(db_column='App Version Status')  # Field name made lowercase. Field renamed to remove unsuitable characters.
 
     class Meta:
         managed = False
