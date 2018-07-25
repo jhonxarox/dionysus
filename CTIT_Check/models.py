@@ -137,7 +137,6 @@ class Fraud(models.Model):
 
 
 class Install(models.Model):
-    index = models.BigAutoField()
     id = models.BigAutoField(primary_key=True)
     attributed_touch_time = models.DateTimeField(db_column='Attributed Touch Time', blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
     install_time = models.DateTimeField(db_column='Install Time', blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.

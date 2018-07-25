@@ -2,7 +2,6 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from .function import *
-from .config import *
 from .models import *
 
 
@@ -32,12 +31,12 @@ def upload(request):
     if not (csv_file.name.endswith('.csv')):
         return render(request, 'upload.html', {'message': "Please Upload CSV file!"})
 
-    con_engine = connection_engine(connection_to_database)
+    con_engine = connection_engine()
     raw_data = read_csv(csv_file)
     ctit_result = ctit_check(raw_data)
     device_result = device_check(ctit_result, con_engine)
     data = app_version_check(device_result, con_engine)
-    fraud_data = fraud_check(device_result)
+    fraud_data = fraud_check(data)
     insert_data_to_db(data, con_engine)
     insert_fraud_to_db(fraud_data, con_engine)
     status = True
@@ -50,7 +49,7 @@ def page_lockscreen(request):
 
 def alldata(request):
     data = Install.objects.all()
-    paginator = Paginator(data, 100)
+    paginator = Paginator(data, 1000)
     page = request.GET.get('page')
     contacts = paginator.get_page(page)
     # head = pd.DataFrame(list(output.values()))

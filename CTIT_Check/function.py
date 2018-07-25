@@ -15,7 +15,7 @@ from .config import *
 
 
 # Connection to Database
-def connection_engine(connection_to_database):
+def connection_engine():
     con_engine = sa.create_engine(connection_to_database)
     return con_engine
 
@@ -45,13 +45,13 @@ def ctit_check(raw_data):
     for index, row in raw_data.iterrows():
         if not isinstance(row['Attributed Touch Time'], str) and math.isnan(row['Attributed Touch Time']):
             installTime = datetime.strptime(row['Install Time'], '%Y-%m-%d %H:%M:%S')
-            attributeTouchTime = installTime - dt.timedelta(seconds=minimal_time)
+            attributeTouchTime = installTime - dt.timedelta(seconds=minimal_time_CTIT)
         else:
             attributeTouchTime = datetime.strptime(row['Attributed Touch Time'], '%Y-%m-%d %H:%M:%S')
             installTime = datetime.strptime(row['Install Time'], '%Y-%m-%d %H:%M:%S')
 
         time_reduce = installTime - attributeTouchTime
-        if time_reduce.total_seconds() < minimal_time:
+        if time_reduce.total_seconds() < minimal_time_CTIT:
             raw_data.at[index, 'CTIT Status'] = True
     return raw_data
 
@@ -62,16 +62,19 @@ def device_check(raw_data, con_engine):
         white_list_device = pd.read_sql(""" SELECT "Attributed Touch Time", "Device Type" 
                                         FROM install
                                         """, cursor)
+
     white_list_device['Attributed Touch Time'] = pd.to_datetime(white_list_device['Attributed Touch Time'])
     white_list_device = white_list_device[
         white_list_device['Attributed Touch Time']
-        > dt.datetime.now() - dt.timedelta(days=30)]
+        > dt.datetime.now() - dt.timedelta(days=minimal_time_device)]
     white_list_device['Total Device'] = 0
     white_list_device = white_list_device.groupby('Device Type', as_index=False)['Total Device'].count()
     white_list_device = white_list_device[white_list_device['Total Device'] > minimal_device]
+
     raw_data = raw_data.merge(white_list_device, on=['Device Type'], indicator='Device Status', how='left')
-    raw_data.drop('Total Device', axis=1)
+    raw_data = raw_data.drop('Total Device', axis=1)
     raw_data['Device Status'] = np.where(raw_data['Device Status'] == 'both', True, False)
+
     return raw_data
 
 
@@ -90,11 +93,15 @@ def app_version_check(raw_data, con_engine):
     raw_data = raw_data.drop(['Platform_y', 'Date Release'], axis=1)
     raw_data = raw_data.rename(columns={'Platform_x': 'Platform'})
     raw_data['App Version Status'] = np.where(raw_data['App Version Status'] == 'both', True, False)
+    return raw_data
 
 
 # Get Fraud data
 def fraud_check(raw_data):
-    fraud_data = raw_data.loc[(raw_data['Device Status'] == False) & (raw_data['CTIT Status'] == True)]
+    fraud_data = raw_data.loc[
+        (raw_data['Device Status'] == False) &
+        (raw_data['CTIT Status'] == True) &
+        (raw_data['App Version Status'] == False)]
     fraud_data = fraud_data[['AppsFlyer ID']]
     return fraud_data
 
@@ -107,4 +114,3 @@ def insert_data_to_db(raw_data, con_engine):
 # Insert fraud data to database
 def insert_fraud_to_db(fraud_data, con_engine):
     fraud_data.to_sql(name='fraud', con=con_engine, if_exists='append', index=False)
-

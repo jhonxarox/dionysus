@@ -21,6 +21,7 @@
 											<th>Platform</th>
 											<th>Device Type</th>
 											<th>App Version</th>
+											<th>Status</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -29,13 +30,18 @@
 												{% if data.number == 1 %}
 												<td>{{ 	forloop.counter|mul:data.number }} </td>
 												{% else %}
-												<td>{{ 	data.number|mul:100|add:forloop.counter }} </td>
+												<td>{{ 	data.number|mul:1000|add:forloop.counter }} </td>
 												{% endif %}
 												<td>{{ datum.appsflyer_id }}</td>
 												<td>{{ datum.media_source }}</td>
 												<td>{{ datum.platform }}</td>
 												<td>{{ datum.device_type }}</td>
 												<td>{{ datum.app_version }}</td>
+												{% if not data.device_status or data.ctit_status or not data.app_version_status %}
+												<td><span class="label label-danger">FRAUD</span></td>
+												{% else %}
+												<td><span class="label label-success">CLEAN</span></td>
+												{% endif %}
 											</tr>
 										{% endfor %}
 									</tbody>
