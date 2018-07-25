@@ -114,3 +114,14 @@ def insert_data_to_db(raw_data, con_engine):
 # Insert fraud data to database
 def insert_fraud_to_db(fraud_data, con_engine):
     fraud_data.to_sql(name='fraud', con=con_engine, if_exists='append', index=False)
+
+
+def take_media_source(con_engine):
+    with con_engine.connect() as cursor:
+        media_source = pd.read_sql(""" SELECT "Media Source"
+                                   FROM install
+                                   """, cursor)
+
+    media_source = media_source.drop_duplicates()
+    media_source = media_source['Media Source'].astype(str)
+    return media_source

@@ -6,7 +6,8 @@ from .models import *
 
 
 def index(request):
-    return render(request, 'index.html', {})
+    media_source = take_media_source(connection_engine())
+    return render(request, 'index.html', {'media_source': media_source})
 
 
 def elements(request):

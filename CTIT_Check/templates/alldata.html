@@ -37,7 +37,11 @@
 												<td>{{ datum.platform }}</td>
 												<td>{{ datum.device_type }}</td>
 												<td>{{ datum.app_version }}</td>
-												{% if not data.device_status or data.ctit_status or not data.app_version_status %}
+												{% if data.ctit_status %}
+												<td><span class="label label-danger">FRAUD</span></td>
+												{% elif data.device_status != None %}
+												<td><span class="label label-danger">FRAUD</span></td>
+												{% elif data.app_version_status != None %}
 												<td><span class="label label-danger">FRAUD</span></td>
 												{% else %}
 												<td><span class="label label-success">CLEAN</span></td>
