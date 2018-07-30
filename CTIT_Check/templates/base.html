@@ -11,6 +11,8 @@
 	<link rel="stylesheet" href="../static/vendor/font-awesome/css/font-awesome.min.css">
 	<link rel="stylesheet" href="../static/vendor/linearicons/style.css">
 	<link rel="stylesheet" href="../static/vendor/chartist/css/chartist-custom.css">
+	<!--MAIN JS-->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
 	<!-- MAIN CSS -->
 	<link rel="stylesheet" href="../static/css/main.css">
 	<!-- GOOGLE FONTS -->
@@ -128,6 +130,7 @@
 	<script src="../static/vendor/jquery.easy-pie-chart/jquery.easypiechart.min.js"></script>
 	<script src="../static/vendor/chartist/js/chartist.min.js"></script>
 	<script src="../static/scripts/klorofil-common.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
 	<script>
 	$(function() {
 		var data, options;
@@ -244,6 +247,10 @@
 			return Math.floor(Math.random() * (max - min + 1)) + min;
 		}
 
+	});
+
+	$(document).ready(function() {
+    	$('.js-example-basic-multiple').select2();
 	});
 	</script>
 </body>

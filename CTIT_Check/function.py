@@ -125,3 +125,9 @@ def take_media_source(con_engine):
     media_source = media_source.drop_duplicates()
     media_source = media_source['Media Source'].astype(str)
     return media_source
+
+
+def get_data_media_source(con_engine, form):
+
+
+    data = sql_input.col.isin(form.media_sources)

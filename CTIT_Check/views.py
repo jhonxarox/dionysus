@@ -3,11 +3,22 @@ from django.shortcuts import render
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from .function import *
 from .models import *
+from .forms import *
 
 
 def index(request):
-    media_source = take_media_source(connection_engine())
-    return render(request, 'index.html', {'media_source': media_source})
+    if request.method == 'GET':
+        status = True
+        input_data = CheckingFraudForm(request.GET)
+        data = Install.objects.filter(media_souce=input_data.media_sources,
+                                      attributed_touch_time__range=(input_data.start_date, input_data.end_date))
+        return render(request, 'index.html', {'output': data,
+                                              'status': status})
+    else:
+        status = False
+        media_source = take_media_source(connection_engine())
+        return render(request, 'index.html', {'status': status,
+                                              'media_source': media_source})
 
 
 def elements(request):

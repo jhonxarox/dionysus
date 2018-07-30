@@ -9,32 +9,79 @@
 					<!-- OVERVIEW -->
 					<div class="panel panel-headline">
 						<div class="panel-heading">
-							<div class="row">
-								<div class="col-md-8 ">
-									<h3 class="panel-title">Checking Fraud Data</h3>
-									<select class="form-control">
-										{% for i,data in media_source.itertuples %}
-										<option value="{{ data }}">{{ data }}</option>
-										{% endfor %}
-									</select>
+							<form action="/index/" method="get" enctype="multipart/form-data"></form>
+								{% csrf_token %}
+								{{ form }}
+								<div class="row">
+									<div class="col-md-8 ">
+										<h3 class="panel-title">Checking Fraud Data</h3>
+										<select multiple="multiple" class="form-control js-example-basic-multiple" name="media_sources">
+											{% for media in media_source %}
+											<option value="{{ media }}">{{ media }}</option>
+											{% endfor %}
+										</select>
+									</div>
+									<div class="col-md-4">
+										<a href="alldata/">
+											<h4>Check All Data</h4>
+										</a>
+									</div>
 								</div>
-							</div>
-							<div class="row">
-								<div class="col-md-4">
-									<h4>Start Date</h4>
-									<input type="date" name="startday">
+								<div class="row">
+									<div class="col-md-4">
+										<h4>Start Date</h4>
+										<input type="date" name="start_day">
+									</div>
+									<div class="col-md-4">
+										<h4>End Date</h4>
+										<input type="date" name="end_day">
+									</div>
+									<div class="col-md-4">
+										<input type="submit" class="btn btn-primary" value="Submit"/>
+									</div>
 								</div>
-								<div class="col-md-4">
-									<h4>End Date</h4>
-									<input type="date" name="endday">
-								</div>
-								<div class="col-md-4">
-									<input type="submit" value="Submit">
-								</div>
-							</div>
+							</form>
 						</div>
 					</div>
 					<!-- END OVERVIEW -->
+
+					{%if status%}
+					<div class="row">
+						<div class="col-md-12">
+							<!-- RECENT PURCHASES -->
+							<div class="panel">
+								<div class="panel-heading">
+									<h3 class="panel-title">Search Result</h3>
+									<div class="right">
+										<button type="button" class="btn-toggle-collapse"><i class="lnr lnr-chevron-up"></i></button>
+										<button type="button" class="btn-remove"><i class="lnr lnr-cross"></i></button>
+									</div>
+								</div>
+								<div class="panel-body no-padding">
+									<table class="table table-striped">
+										<thead>
+											<tr><th>Order No.</th><th>Name</th><th>Amount</th><th>Date &amp; Time</th><th>Status</th></tr>
+										</thead>
+										<tbody>
+											<tr><td><a href="#">763648</a></td><td>Steve</td><td>$122</td><td>Oct 21, 2016</td><td><span class="label label-success">COMPLETED</span></td></tr>
+											<tr><td><a href="#">763649</a></td><td>Amber</td><td>$62</td><td>Oct 21, 2016</td><td><span class="label label-warning">PENDING</span></td></tr>
+											<tr><td><a href="#">763650</a></td><td>Michael</td><td>$34</td><td>Oct 18, 2016</td><td><span class="label label-danger">FAILED</span></td></tr>
+											<tr><td><a href="#">763651</a></td><td>Roger</td><td>$186</td><td>Oct 17, 2016</td><td><span class="label label-success">SUCCESS</span></td></tr>
+											<tr><td><a href="#">763652</a></td><td>Smith</td><td>$362</td><td>Oct 16, 2016</td><td><span class="label label-success">SUCCESS</span></td></tr>
+										</tbody>
+									</table>
+								</div>
+								<div class="panel-footer">
+									<div class="row">
+										<div class="col-md-6"><span class="panel-note"><i class="fa fa-clock-o"></i> Last 24 hours</span></div>
+										<div class="col-md-6 text-right"><a href="#" class="btn btn-primary">View All Purchases</a></div>
+									</div>
+								</div>
+							</div>
+							<!-- END RECENT PURCHASES -->
+						</div>
+					</div>
+					{%endif%}
 				</div>
 			</div>
 			<!-- END MAIN CONTENT -->
