@@ -30,7 +30,7 @@
 												{% if data.number == 1 %}
 												<td>{{ 	forloop.counter|mul:data.number }} </td>
 												{% else %}
-												<td>{{ 	data.number|mul:1000|add:forloop.counter }} </td>
+												<td>{{ 	data.number|mul:100|add:forloop.counter }} </td>
 												{% endif %}
 												<td>{{ datum.appsflyer_id }}</td>
 												<td>{{ datum.media_source }}</td>

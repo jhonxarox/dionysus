@@ -9,13 +9,14 @@
 					<!-- OVERVIEW -->
 					<div class="panel panel-headline">
 						<div class="panel-heading">
-							<form action="/index/" method="get" enctype="multipart/form-data"></form>
+							<h3 class="panel-title">Checking Fraud Data</h3>
+							<div class="panel-body">
+								<form action="/" method="post" enctype="multipart/form-data" name="getdataform" id="getdataform">
 								{% csrf_token %}
 								{{ form }}
 								<div class="row">
 									<div class="col-md-8 ">
-										<h3 class="panel-title">Checking Fraud Data</h3>
-										<select multiple="multiple" class="form-control js-example-basic-multiple" name="media_sources">
+										<select  multiple="multiple" class="form-control js-example-basic-multiple" name="media_sources" id="media_sources">
 											{% for media in media_source %}
 											<option value="{{ media }}">{{ media }}</option>
 											{% endfor %}
@@ -30,58 +31,81 @@
 								<div class="row">
 									<div class="col-md-4">
 										<h4>Start Date</h4>
-										<input type="date" name="start_day">
+										<input type="date" name="start_date" id="start_date">
 									</div>
 									<div class="col-md-4">
 										<h4>End Date</h4>
-										<input type="date" name="end_day">
+										<input type="date" name="end_date" id="end_date">
 									</div>
 									<div class="col-md-4">
-										<input type="submit" class="btn btn-primary" value="Submit"/>
+										<input type="submit" form="getdataform" class="btn btn-primary"/>
 									</div>
 								</div>
-							</form>
+								</form>
+							</div>
 						</div>
 					</div>
 					<!-- END OVERVIEW -->
 
-					{%if status%}
+
 					<div class="row">
-						<div class="col-md-12">
-							<!-- RECENT PURCHASES -->
-							<div class="panel">
-								<div class="panel-heading">
-									<h3 class="panel-title">Search Result</h3>
-									<div class="right">
-										<button type="button" class="btn-toggle-collapse"><i class="lnr lnr-chevron-up"></i></button>
-										<button type="button" class="btn-remove"><i class="lnr lnr-cross"></i></button>
+							<div class="col-md-12">
+								{% if form.errors %}
+									{% for field in form %}
+										{% for error in field.errors %}
+											<div class="alert alert-danger alert-dismissible" role="alert">
+												<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+												<i class="fa fa-times-circle"></i> {{ error|escape }}
+											</div>
+										{% endfor %}
+									{% endfor %}
+									{% for error in form.non_field_errors %}
+										<div class="alert alert-danger alert-dismissible" role="alert">
+											<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+											<i class="fa fa-times-circle"></i> {{ error|escape }}
+										</div>
+									{% endfor %}
+								{% endif %}
+								<!-- RECENT PURCHASES -->
+								<div class="panel">
+									<div class="panel-heading">
+										<h3 class="panel-title">Fraud Data</h3>
+										<div class="right">
+											<button type="button" class="btn-toggle-collapse"><i class="lnr lnr-chevron-up"></i></button>
+											<button type="button" class="btn-remove"><i class="lnr lnr-cross"></i></button>
+										</div>
+									</div>
+									<div class="panel-body no-padding">
+										<div class="col-md-3">
+											<div class="metric">
+												<span class="icon"><i class="fa fa-times"></i></span>
+												<p>
+													<span class="number">{{bad_percentage}}</span>
+													<span class="title">Fraud</span>
+												</p>
+											</div>
+										</div>
+										<div class="col-md-3">
+											<div class="metric">
+												<span class="icon"><i class="fa fa-check-circle"></i></span>
+												<p>
+													<span class="number">{{good_percentage}}</span>
+													<span class="title">Not Fraud</span>
+												</p>
+											</div>
+										</div>
+									</div>
+									<div class="panel-footer">
+										<div class="row">
+											<div class="col-md-6"><span class="panel-note"><i class="fa fa-clock-o"></i> Last 24 hours</span></div>
+											<div class="col-md-6 text-right"><a href="#" class="btn btn-primary">View All Purchases</a></div>
+										</div>
 									</div>
 								</div>
-								<div class="panel-body no-padding">
-									<table class="table table-striped">
-										<thead>
-											<tr><th>Order No.</th><th>Name</th><th>Amount</th><th>Date &amp; Time</th><th>Status</th></tr>
-										</thead>
-										<tbody>
-											<tr><td><a href="#">763648</a></td><td>Steve</td><td>$122</td><td>Oct 21, 2016</td><td><span class="label label-success">COMPLETED</span></td></tr>
-											<tr><td><a href="#">763649</a></td><td>Amber</td><td>$62</td><td>Oct 21, 2016</td><td><span class="label label-warning">PENDING</span></td></tr>
-											<tr><td><a href="#">763650</a></td><td>Michael</td><td>$34</td><td>Oct 18, 2016</td><td><span class="label label-danger">FAILED</span></td></tr>
-											<tr><td><a href="#">763651</a></td><td>Roger</td><td>$186</td><td>Oct 17, 2016</td><td><span class="label label-success">SUCCESS</span></td></tr>
-											<tr><td><a href="#">763652</a></td><td>Smith</td><td>$362</td><td>Oct 16, 2016</td><td><span class="label label-success">SUCCESS</span></td></tr>
-										</tbody>
-									</table>
-								</div>
-								<div class="panel-footer">
-									<div class="row">
-										<div class="col-md-6"><span class="panel-note"><i class="fa fa-clock-o"></i> Last 24 hours</span></div>
-										<div class="col-md-6 text-right"><a href="#" class="btn btn-primary">View All Purchases</a></div>
-									</div>
-								</div>
+								<!-- END RECENT PURCHASES -->
 							</div>
-							<!-- END RECENT PURCHASES -->
-						</div>
 					</div>
-					{%endif%}
+
 				</div>
 			</div>
 			<!-- END MAIN CONTENT -->

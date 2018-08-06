@@ -7,13 +7,34 @@ from .forms import *
 
 
 def index(request):
-    if request.method == 'GET':
-        status = True
-        input_data = CheckingFraudForm(request.GET)
-        data = Install.objects.filter(media_souce=input_data.media_sources,
-                                      attributed_touch_time__range=(input_data.start_date, input_data.end_date))
-        return render(request, 'index.html', {'output': data,
-                                              'status': status})
+    if request.method == 'POST':
+        form = CheckingFraudForm(request.POST)
+        if form.is_valid():
+            status = True
+            media_sources = form.cleaned_data['media_sources']
+            # fraud_data = media_source[(
+            #         media_source['CTIT Status'] |
+            #         media_source['App Version Status'] |
+            #         media_source['Device Status'])]
+
+            # start_date = form.cleaned_data['start_date']
+            # end_date = form.cleaned_data['end_date']
+
+            data = Install.objects.filter(media_source=media_sources)
+            fraud_data = data[(data['CTIT Status'] |
+                               data['App Version Status'] |
+                               data['Device Status'])]
+            bad_percentage = ((len(data.index) - len(fraud_data.index)) / len(data.index)) * 100
+            good_percentage = 100 - bad_percentage
+            return render(request, 'index.html', {'status': status,
+                                                  'good_percentage': good_percentage,
+                                                  'bad_percentage': bad_percentage})
+        else:
+            status = True
+            media_source = take_media_source(connection_engine())
+            return render(request, 'index.html', {'form': form,
+                                                  'media_source': media_source,
+                                                  'status': status})
     else:
         status = False
         media_source = take_media_source(connection_engine())
@@ -61,7 +82,7 @@ def page_lockscreen(request):
 
 def alldata(request):
     data = Install.objects.all()
-    paginator = Paginator(data, 1000)
+    paginator = Paginator(data, 100)
     page = request.GET.get('page')
     contacts = paginator.get_page(page)
     # head = pd.DataFrame(list(output.values()))
