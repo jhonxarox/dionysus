@@ -10,6 +10,7 @@
 					<div class="panel panel-headline">
 						<div class="panel-heading">
 							<h3 class="panel-title">Checking Fraud Data</h3>
+							<h6>{{ status }}</h6>
 							<div class="panel-body">
 								<form action="/" method="post" enctype="multipart/form-data" name="getdataform" id="getdataform">
 								{% csrf_token %}
@@ -103,6 +104,21 @@
 									</div>
 								</div>
 								<!-- END RECENT PURCHASES -->
+							</div>
+					</div>
+					{% endif %}
+
+					{% if error %}
+					<div class="row">
+							<div class="col-md-12">
+								<!-- START ERROR -->
+								<div class="panel">
+									<div class="alert alert-danger alert-dismissible" role="alert">
+										<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+										<i class="fa fa-times-circle"></i> {{ error }}
+									</div>
+								</div>
+								<!-- END ERROR -->
 							</div>
 					</div>
 					{% endif %}
