@@ -99,8 +99,8 @@ def app_version_check(raw_data, con_engine):
 # Get Fraud data
 def fraud_check(raw_data):
     fraud_data = raw_data.loc[
-        (raw_data['Device Status'] == False) &
-        (raw_data['CTIT Status'] == True) &
+        (raw_data['Device Status'] == False) |
+        (raw_data['CTIT Status'] == True) |
         (raw_data['App Version Status'] == False)]
     fraud_data = fraud_data[['AppsFlyer ID']]
     return fraud_data
