@@ -39,9 +39,9 @@
 												<td>{{ datum.app_version }}</td>
 												{% if data.ctit_status %}
 												<td><span class="label label-danger">FRAUD</span></td>
-												{% elif data.device_status != None %}
+												{% elif not data.device_status %}
 												<td><span class="label label-danger">FRAUD</span></td>
-												{% elif data.app_version_status != None %}
+												{% elif not data.app_version_status %}
 												<td><span class="label label-danger">FRAUD</span></td>
 												{% else %}
 												<td><span class="label label-success">CLEAN</span></td>

@@ -11,6 +11,7 @@
 						<div class="panel-heading">
 							<h3 class="panel-title">Checking Fraud Data</h3>
 							<h6>{{ status }}</h6>
+							<h6>{{ message }}</h6>
 							<div class="panel-body">
 								<form action="/" method="post" enctype="multipart/form-data" name="getdataform" id="getdataform">
 								{% csrf_token %}

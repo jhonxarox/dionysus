@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+		<!-- MAIN -->
+		<div class="main">
+			<!-- MAIN CONTENT -->
+			<div class="main-content">
+				<div class="container-fluid">
+					<h3 class="page-title">Upload Validation</h3>
+					<div id="toastr-demo" class="panel">
+						<div class="panel-body">
+							<form action="/upload/" method="post" enctype="multipart/form-data">
+								{% csrf_token %}
+								{{ form }}
+								<label>File : </label>
+								<div class="input-group">
+									<input type="file" class="form-control" name="csv_file" id="csv_file" required="True">
+									<span class="input-group-btn"><input type="submit" class="btn btn-primary" value="Upload"/></span>
+								</div>
+							</form>
+							{% if status %}
+							<div class="alert alert-success alert-dismissible" role="alert">
+								<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+								<i class="fa fa-check-circle"></i> {{ message }}
+							</div>
+							{% elif message %}
+							<div class="alert alert-danger alert-dismissible" role="alert">
+								<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+								<i class="fa fa-times-circle"></i> {{ message }}
+							</div>
+							{% endif %}
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- END MAIN CONTENT -->
+		</div>
+		<!-- END MAIN -->
+{% endblock %}

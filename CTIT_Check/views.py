@@ -24,24 +24,27 @@ def index(request):
 
                 data = Install.objects.filter(media_source=media_sources)
                 fraud_data = data[(data['CTIT Status'] | data['App Version Status'] | data['Device Status'])]
-                bad_percentage = ((len(data.index) - len(fraud_data.index)) / ((len(data.index)) * 100))
-                good_percentage = 100 - bad_percentage
+                # bad_percentage = ((len(data.index) - len(fraud_data.index)) / ((len(data.index)) * 100))
+                # good_percentage = 100 - bad_percentage
                 return render(request, 'index.html', {'status': status,
-                                                      'good_percentage': good_percentage,
-                                                      'bad_percentage': bad_percentage,
-                                                      'media_source': media_source})
+                                                      # 'good_percentage': good_percentage,
+                                                      # 'bad_percentage': bad_percentage,
+                                                      'media_source': media_source,
+                                                      'message': "valid true"})
 
             except Exception as e:
                 return render(request, 'index.html', {'error': str(e),
                                                       'media_source': media_source,
-                                                      'status': status})
+                                                      'status': status,
+                                                      'message': "valid false"})
 
         else:
             status = True
             media_source = take_media_source(connection_engine())
             return render(request, 'index.html', {'form': form,
                                                   'media_source': media_source,
-                                                  'status': status})
+                                                  'status': status,
+                                                  'message': "nod valid"})
     else:
         status = False
         media_source = take_media_source(connection_engine())
@@ -61,30 +64,35 @@ def panels(request):
     return render(request, 'panels.html', {})
 
 
-def upload(request):
+def upload_install(request):
     if "GET" == request.method:
         status = False
-        return render(request, 'upload.html', {'status': status})
+        return render(request, 'upload-install.html', {'status': status})
 
     csv_file = request.FILES['csv_file']
 
     if not (csv_file.name.endswith('.csv')):
-        return render(request, 'upload.html', {'message': "Please Upload CSV file!"})
+        return render(request, 'upload-install.html', {'message': "Please Upload CSV file!"})
 
     con_engine = connection_engine()
-    raw_data = read_csv(csv_file)
-    ctit_result = ctit_check(raw_data)
-    device_result = device_check(ctit_result, con_engine)
-    data = app_version_check(device_result, con_engine)
-    fraud_data = fraud_check(data)
-    insert_data_to_db(data, con_engine)
-    insert_fraud_to_db(fraud_data, con_engine)
+    platform = install_check_platform(csv_file)
+    raw_data = install_read_csv(csv_file)
+    ctit_result = install_ctit_check(raw_data)
+    device_result = install_device_check(ctit_result, con_engine)
+    data = install_app_version_check(device_result, con_engine, platform)
+    fraud_data = install_fraud_check(data)
+    install_insert_to_db(data, con_engine)
+    install_insert_fraud_to_db(fraud_data, con_engine)
     status = True
-    return render(request, 'upload.html', {'status': status, 'message': "Upload Success"})
+    return render(request, 'upload-install.html', {'status': status, 'message': "Upload Success"})
 
 
-def page_lockscreen(request):
-    return render(request, 'pages.html', {})
+def upload_orderplace(request):
+    return render(request, 'upload-orderplace.html', {})
+
+
+def upload_bi_validation(request):
+    return render(request, 'upload-validation.html', {})
 
 
 def alldata(request):
