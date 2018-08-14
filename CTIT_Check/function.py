@@ -10,6 +10,7 @@ import numpy as np
 import datetime as dt
 import sqlalchemy as sa
 import math
+import hashlib
 from datetime import datetime
 from .config import *
 
@@ -170,11 +171,14 @@ def orderplace_find_checkout_id(raw_data):
             s += '0'
         else:
             position += 16
-            while (ord(value[position]) >= 48) and (ord(value[position]) <= 57):
+            while (ord(value[position]) >= 48) and (ord(value[position]) <= 57) and position < len(value):
                 s += value[position]
                 position += 1
+                if position == len(value) - 1 and (ord(value[position]) >= 48) and (ord(value[position]) <= 57):
+                    s += value[position]
+                    break
         s = int(s)
-        raw_data.loc[index]['Checkout ID'] = s
+        raw_data.at[index, 'Checkout ID'] = s
     return raw_data
 
 
@@ -197,6 +201,23 @@ def orderplace_status_and_reason_fraud(raw_data, con_engine):
     raw_data['CTIT Status'] = np.where(raw_data['CTIT Status'] == True, True, False)
     raw_data['Device Status'] = np.where(raw_data['Device Status'] == True, True, False)
     raw_data['App Version Status'] = np.where(raw_data['App Version Status'] == True, True, False)
+
+    raw_data['Fraud Reason'] = ""
+    for index, row in raw_data.iterrows():
+        s = ''
+        if row['CTIT Status']:
+            s += "CTIT Problem"
+        if not row['Device Status'] and s:
+            s += ", Device Problem"
+        elif not row['Device Status']:
+            s += "Device Problem"
+        if not row['App Version Status'] and s:
+            s += ", App Version Problem"
+        elif not row['App Version Status']:
+            s += "App Version Problem"
+        raw_data.at[index, 'Fraud Reason'] = s
+
+    raw_data = raw_data.drop(columns=['CTIT Status', 'Device Status', 'App Version Status'])
     return raw_data
 
 
@@ -211,9 +232,15 @@ def orderplace_insert_to_db(raw_data, con_engine):
 def bi_validation_read_csv(csv_filename):
     raw_data = pd.read_csv(csv_filename)
     raw_data = raw_data[['Checkout_ID',
+                         'Order_SN',
+                         'Username',
                          'fe_status',
                          'OrderIDBefore',
                          'PurchaseDateBefore']]
+    raw_data[['Username']] = raw_data[['Username']].astype(str)
+    raw_data[['OrderIDBefore']] = raw_data[['OrderIDBefore']].astype(str)
+    raw_data[['OrderIDBefore']] = raw_data['OrderIDBefore'].str.replace('.0', '', regex=False)
+    raw_data[['OrderIDBefore']] = raw_data['OrderIDBefore'].str.replace('nan', '', regex=False)
     return raw_data
 
 
@@ -230,9 +257,17 @@ def bi_validation_buyer_status_check(raw_data):
     return raw_data
 
 
+def bi_validation_hash_username(raw_data):
+    raw_data['Hash Username'] = ""
+    for index, value in raw_data['Username'].iteritems():
+        hash_username = value.encode(encoding='UTF-8')
+        raw_data.at[index, 'Hash Username'] = hashlib.md5(hash_username).hexdigest()
+    return raw_data
+
+
 def bi_validation_insert_to_db(raw_data, con_engine):
     with con_engine.connect() as cursor:
         all_bi_validation_data = pd.read_sql(""" SELECT * FROM validation """, cursor)
     raw_data = all_bi_validation_data.append(raw_data)
-    raw_data = raw_data.drop_duplicates(keep='last')
+    raw_data = raw_data.drop_duplicates(keep='last', subset=['Checkout_ID', 'Order_SN'])
     raw_data.to_sql(name='validation', con=con_engine, if_exists='replace', index=False)

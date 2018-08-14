@@ -88,11 +88,42 @@ def upload_install(request):
 
 
 def upload_orderplace(request):
-    return render(request, 'upload-orderplace.html', {})
+    if "GET" == request.method:
+        status = False
+        return render(request, 'upload-orderplace.html', {'status': status})
+
+    csv_file = request.FILES['csv_file']
+
+    if not (csv_file.name.endswith('.csv')):
+        return render(request, 'upload-orderplace.html', {'message': "Please Upload CSV file!"})
+
+    con_engine = connection_engine()
+    raw_data = orderplace_read_csv(csv_file)
+    checkout_id = orderplace_find_checkout_id(raw_data)
+    status_reason = orderplace_status_and_reason_fraud(checkout_id, con_engine)
+    orderplace_insert_to_db(status_reason, con_engine)
+    status = True
+    return render(request, 'upload-orderplace.html', {'status': status, 'message': "Upload Success"})
 
 
 def upload_bi_validation(request):
-    return render(request, 'upload-validation.html', {})
+    if "GET" == request.method:
+        status = False
+        return render(request, 'upload-validation.html', {'status': status})
+
+    csv_file = request.FILES['csv_file']
+
+    if not (csv_file.name.endswith('.csv')):
+        return render(request, 'upload-validation.html', {'message': "Please Upload CSV file!"})
+
+    con_engine = connection_engine()
+    raw_data = bi_validation_read_csv(csv_file)
+    order_status = bi_validation_order_status_check(raw_data)
+    buyer_status = bi_validation_order_status_check(order_status)
+    hash_username = bi_validation_hash_username(buyer_status)
+    bi_validation_insert_to_db(hash_username, con_engine)
+    status = True
+    return render(request, 'upload-validation.html', {'status': status, 'message': "Upload Success"})
 
 
 def alldata(request):
