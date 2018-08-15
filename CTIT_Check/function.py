@@ -22,14 +22,15 @@ def connection_engine():
 
 
 # Check Data Platform
-def install_check_platform(csv_filename):
-    raw_data = pd.read_csv(csv_filename)
+def install_check_platform(raw_data):
     raw_data_platform = raw_data[['Platform']]
+    string = ""
     if 'android' in raw_data_platform.values:
-        return "android"
+        string += "android"
+        return string
     else:
-        return "ios"
-
+        string += "ios"
+        return string
 
 # Read CSV file
 def install_read_csv(csv_filename):

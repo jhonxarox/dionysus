@@ -75,8 +75,8 @@ def upload_install(request):
         return render(request, 'upload-install.html', {'message': "Please Upload CSV file!"})
 
     con_engine = connection_engine()
-    platform = install_check_platform(csv_file)
     raw_data = install_read_csv(csv_file)
+    platform = install_check_platform(raw_data)
     ctit_result = install_ctit_check(raw_data)
     device_result = install_device_check(ctit_result, con_engine)
     data = install_app_version_check(device_result, con_engine, platform)
