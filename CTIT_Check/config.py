@@ -12,5 +12,5 @@ minimal_time_check_CTIT = 20
 minimal_time_check_device = 60
 
 # Minimal Days for App Version
-minimal_time_check_app_version = 60
+minimal_time_check_app_version = 7
 

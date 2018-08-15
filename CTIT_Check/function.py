@@ -32,6 +32,7 @@ def install_check_platform(raw_data):
         string += "ios"
         return string
 
+
 # Read CSV file
 def install_read_csv(csv_filename):
     raw_data = pd.read_csv(csv_filename)
@@ -82,15 +83,15 @@ def install_device_check(raw_data, con_engine):
 
     if white_list_device.empty:
         white_list_device = raw_data[['Attributed Touch Time', 'Device Type']]
-    else:
-        white_list_device['Attributed Touch Time'] = pd.to_datetime(white_list_device['Attributed Touch Time'])
-        white_list_device['Total Device'] = 0
-        white_list_device = white_list_device.groupby('Device Type', as_index=False)['Total Device'].count()
-        white_list_device = white_list_device[white_list_device['Total Device'] > minimal_device]
+
+    white_list_device['Attributed Touch Time'] = pd.to_datetime(white_list_device['Attributed Touch Time'])
+    white_list_device['Total Device'] = 0
+    white_list_device = white_list_device.groupby('Device Type', as_index=False)['Total Device'].count()
+    white_list_device = white_list_device[white_list_device['Total Device'] > minimal_device]
 
     raw_data = raw_data.merge(white_list_device, on=['Device Type'], indicator='Device Status', how='left')
     raw_data = raw_data.drop('Total Device', axis=1)
-    raw_data['Device Status'] = np.where(raw_data['Device Status'] == 'both', True, False)
+    raw_data['Device Status'] = np.where(raw_data['Device Status'] == 'both', False, True)
 
     return raw_data
 
@@ -98,27 +99,33 @@ def install_device_check(raw_data, con_engine):
 # App Version Check on raw data
 def install_app_version_check(raw_data, con_engine, platform):
     with con_engine.connect() as cursor:
-        device = pd.read_sql(""" SELECT * 
+        appversion = pd.read_sql(""" SELECT * 
                              FROM appversion """, cursor)
 
-    device['Date Release'] = pd.to_datetime(device['Date Release'])
-    time = dt.datetime.now() - dt.timedelta(days=minimal_time_check_app_version)
-
-    appversion = device[device['Date Release'] > time]
     appversion = appversion[appversion['Platform'] == platform]
+    appversion['Date Release'] = pd.to_datetime(appversion['Date Release'])
+    appversion = appversion.sort_values('Date Release')
+    appversion = appversion.reset_index(drop=True)
+    lastrec = len(appversion.index) - 1
+
+    if dt.datetime.now() <= appversion.iloc[lastrec]['Date Release'] + dt.timedelta(days=minimal_time_check_app_version):
+        appversion = appversion.tail(2)
+    else:
+        appversion = appversion.tail(1)
+
     raw_data = raw_data.merge(appversion, on=['App Version'], indicator='App Version Status', how='left')
     raw_data = raw_data.drop(['Platform_y', 'Date Release'], axis=1)
     raw_data = raw_data.rename(columns={'Platform_x': 'Platform'})
-    raw_data['App Version Status'] = np.where(raw_data['App Version Status'] == 'both', True, False)
+    raw_data['App Version Status'] = np.where(raw_data['App Version Status'] == 'both', False, True)
     return raw_data
 
 
 # Get Fraud data
 def install_fraud_check(raw_data):
     fraud_data = raw_data.loc[
-        (raw_data['Device Status'] == False) |
+        (raw_data['Device Status'] == True) |
         (raw_data['CTIT Status'] == True) |
-        (raw_data['App Version Status'] == False)]
+        (raw_data['App Version Status'] == True)]
     fraud_data = fraud_data[['AppsFlyer ID']]
     return fraud_data
 
