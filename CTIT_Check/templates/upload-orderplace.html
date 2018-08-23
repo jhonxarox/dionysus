@@ -6,7 +6,7 @@
 			<!-- MAIN CONTENT -->
 			<div class="main-content">
 				<div class="container-fluid">
-					<h3 class="page-title">Upload Orderplace</h3>
+					<h2 class="page-title">Upload Orderplace</h2>
 					<div id="toastr-demo" class="panel">
 						<div class="panel-body">
 							<form action="/upload-orderplace/" method="post" enctype="multipart/form-data">
@@ -16,13 +16,21 @@
 								<div class="input-group">
 									<input type="file" class="form-control" name="csv_file" id="csv_file" required="True">
 									<span class="input-group-btn"><input type="submit" class="btn btn-primary" value="Upload"/></span>
-								</div>
+								</div><br>
+								<label class="fancy-checkbox">
+									<input type="checkbox" name="download">
+									<span>Download Checkout <ID></ID></span>
+								</label>
 							</form>
 							{% if status %}
 							<div class="alert alert-success alert-dismissible" role="alert">
 								<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-								<i class="fa fa-check-circle"></i> {{ message }}
+								<i class="fa fa-check-circle"></i> {{ message }} {{checkout_id}}
 							</div>
+							<!--<button type="button" class="btn btn-success" onclick="window.open('download_csv')">-->
+								<!--<i class="fa fa-download"></i>-->
+								<!--<span>Download Checkout ID</span>-->
+							<!--</button>-->
 							{% elif message %}
 							<div class="alert alert-danger alert-dismissible" role="alert">
 								<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>

@@ -164,7 +164,8 @@ def orderplace_read_csv(csv_filename):
     raw_data = raw_data[['AppsFlyer ID',
                          'Event Time',
                          'Event Value',
-                         'Is Retargeting']]
+                         'Is Retargeting',
+                         ]]
 
     raw_data[['Event Value']] = raw_data[['Event Value']].astype(str)
     return raw_data
@@ -195,8 +196,6 @@ def orderplace_status_and_reason_fraud(raw_data, con_engine):
         all_fraud_data = pd.read_sql(""" SELECT * FROM fraud """, cursor)
         all_install_data = pd.read_sql(""" SELECT * FROM install """, cursor)
 
-    all_fraud_data = all_fraud_data.drop_duplicates()
-    all_install_data = all_install_data.drop_duplicates()
     raw_data = raw_data.merge(all_fraud_data, on=['AppsFlyer ID'], indicator='Fraud Status', how='left')
     raw_data['Fraud Status'] = np.where(raw_data['Fraud Status'] == 'both', True, False)
 
@@ -206,23 +205,28 @@ def orderplace_status_and_reason_fraud(raw_data, con_engine):
                                          'App Version Status']]
 
     raw_data = raw_data.merge(all_install_data, on=['AppsFlyer ID'], how='left')
-    raw_data['CTIT Status'] = np.where(raw_data['CTIT Status'] == True, True, False)
-    raw_data['Device Status'] = np.where(raw_data['Device Status'] == True, True, False)
-    raw_data['App Version Status'] = np.where(raw_data['App Version Status'] == True, True, False)
+    raw_data[['CTIT Status']] = raw_data['CTIT Status'].fillna(False)
+    raw_data[['Device Status']] = raw_data['Device Status'].fillna(False)
+    raw_data[['App Version Status']] = raw_data['App Version Status'].fillna(False)
 
     raw_data['Fraud Reason'] = ""
     for index, row in raw_data.iterrows():
         s = ''
-        if row['CTIT Status']:
+        if row['CTIT Status'] and s:
             s += "CTIT Problem"
-        if not row['Device Status'] and s:
+        elif row['CTIT Status']:
+            s += "CTIT Problem"
+
+        if row['Device Status'] and s:
             s += ", Device Problem"
-        elif not row['Device Status']:
+        elif row['Device Status']:
             s += "Device Problem"
-        if not row['App Version Status'] and s:
+
+        if row['App Version Status'] and s:
             s += ", App Version Problem"
-        elif not row['App Version Status']:
+        elif row['App Version Status']:
             s += "App Version Problem"
+
         raw_data.at[index, 'Fraud Reason'] = s
 
     raw_data = raw_data.drop(columns=['CTIT Status', 'Device Status', 'App Version Status'])
@@ -233,9 +237,13 @@ def orderplace_insert_to_db(raw_data, con_engine):
     with con_engine.connect() as cursor:
         all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
     raw_data = all_orderplace_data.append(raw_data)
-    raw_data = raw_data.drop_duplicates(keep='last')
+    raw_data = raw_data.drop_duplicates(keep='last', subset=['Checkout ID'])
     raw_data.to_sql(name='orderplace', con=con_engine, if_exists='replace', index=False)
 
+
+def orderplace_checkout_id(raw_data):
+    checkout_id = raw_data['Checkout ID']
+    return checkout_id
 
 def bi_validation_read_csv(csv_filename):
     raw_data = pd.read_csv(csv_filename)
@@ -260,8 +268,8 @@ def bi_validation_order_status_check(raw_data):
 
 
 def bi_validation_buyer_status_check(raw_data):
-    raw_data['Buyer Status'] = raw_data['OrderIDBefore'].isnull()
-    raw_data['Buyer Status'] = np.where(raw_data['Buyer Status'] == True, "New", "Repeat")
+    raw_data['Buyer Status'] = raw_data['OrderIDBefore'].isnull() | raw_data['PurchaseDateBefore'].isnull()
+    raw_data['Buyer Status'] = np.where(raw_data['Buyer Status'], "New", "Repeat")
     return raw_data
 
 
@@ -279,3 +287,40 @@ def bi_validation_insert_to_db(raw_data, con_engine):
     raw_data = all_bi_validation_data.append(raw_data)
     raw_data = raw_data.drop_duplicates(keep='last', subset=['Checkout_ID', 'Order_SN'])
     raw_data.to_sql(name='validation', con=con_engine, if_exists='replace', index=False)
+
+def take_all_install_data_base_on_date(con_engine, start, end):
+    with con_engine.connect() as cursor:
+        all_fraud_data = pd.read_sql(""" SELECT * FROM fraud """, cursor)
+        all_install_data = pd.read_sql(""" SELECT * FROM install """, cursor)
+        all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
+        all_validation_data = pd.read_sql(""" SELECT * FROM validation """, cursor)
+
+    # all_install_data[['Attributed Touch Time']] = pd.to_datetime(all_install_data['Attributed Touch Time'])
+    # all_install_data = all_install_data[
+    #     (all_install_data['Attributed Touch Time']>= start) &
+    #     (all_install_data['Attributed Touch Time']<= end)]
+    #
+    # all_install_data = all_install_data[['AppsFlyer ID', 'Attributed Touch Time']]
+
+#     return all_install_data
+#
+#
+# def take_
+    new_buyer_order_valid = all_validation_data[
+        (all_validation_data['Buyer Status'] == "New") & (all_validation_data['Order Status'] == "Valid")]
+    all_orderplace_data[['Event Time']] = pd.to_datetime(all_orderplace_data['Event Time'])
+    all_orderplace_data = all_orderplace_data[
+        (all_orderplace_data['Event Time']>= start)&
+        (all_orderplace_data['Event Time']<= end)
+    ]
+    not_fraud_orderplace = all_orderplace_data[all_orderplace_data['Fraud Status'] == False]
+    not_fraud_orderplace = not_fraud_orderplace.merge(all_install_data, how='left')
+    not_fraud_orderplace = not_fraud_orderplace[not_fraud_orderplace['Attributed Touch Time'].notnull() == True]
+
+    result = new_buyer_order_valid.merge(not_fraud_orderplace, left_on='Checkout_ID', right_on='Checkout ID',
+                                         how='left')
+    result = result.drop(columns='Checkout_ID')
+    test = result[result['Checkout ID'].isnull()]
+    hasil = len(result) - len(test)
+
+    return hasil

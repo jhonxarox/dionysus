@@ -7,7 +7,10 @@ class CheckingFraudForm(forms.Form):
     option = ()
     for data in options:
         option = option + ((data, data),)
-
     media_sources = forms.MultipleChoiceField(choices=option, widget=forms.SelectMultiple)
-    start_date = forms.DateInput()
-    end_date = forms.DateInput()
+    start_date = forms.DateTimeField()
+    end_date = forms.DateTimeField()
+
+
+class uploadOrderplace(forms.Form):
+    download = forms.BooleanField(required=False)

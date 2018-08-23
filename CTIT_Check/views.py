@@ -1,4 +1,6 @@
-from django.http import HttpResponse
+import csv
+
+from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from .function import *
@@ -19,17 +21,22 @@ def index(request):
                 #         media_source['CTIT Status'] |
                 #         media_source['App Version Status'] |
                 #         media_source['Device Status'])]
-                # start_date = form.cleaned_data['start_date']
-                # end_date = form.cleaned_data['end_date']
+                start_date = form.cleaned_data['start_date']
+                end_date = form.cleaned_data['end_date']
 
-                data = Install.objects.filter(media_source=media_sources)
-                fraud_data = data[(data['CTIT Status'] | data['App Version Status'] | data['Device Status'])]
+                all_data = take_all_install_data_base_on_date(connection_engine(), start_date, end_date)
+                # data = Install.objects.filter(media_source=media_sources)
+                # fraud_data = data[(data['CTIT Status'] | data['App Version Status'] | data['Device Status'])]
                 # bad_percentage = ((len(data.index) - len(fraud_data.index)) / ((len(data.index)) * 100))
                 # good_percentage = 100 - bad_percentage
                 return render(request, 'index.html', {'status': status,
                                                       # 'good_percentage': good_percentage,
                                                       # 'bad_percentage': bad_percentage,
+                                                      'start_date': start_date,
+                                                      'end_date': end_date,
+                                                      'all_data': all_data,
                                                       'media_source': media_source,
+                                                      'media_sources': media_sources,
                                                       'message': "valid true"})
 
             except Exception as e:
@@ -93,17 +100,31 @@ def upload_orderplace(request):
         return render(request, 'upload-orderplace.html', {'status': status})
 
     csv_file = request.FILES['csv_file']
-
+    # status = request.POST.getlist['status']
+    form = uploadOrderplace(request.POST)
     if not (csv_file.name.endswith('.csv')):
         return render(request, 'upload-orderplace.html', {'message': "Please Upload CSV file!"})
 
+    if not form.is_valid():
+        status = False
+        return render(request, 'upload-orderplace.html', {'status': status})
+
+    download = form.cleaned_data['download']
     con_engine = connection_engine()
     raw_data = orderplace_read_csv(csv_file)
-    checkout_id = orderplace_find_checkout_id(raw_data)
-    status_reason = orderplace_status_and_reason_fraud(checkout_id, con_engine)
+    checkout = orderplace_find_checkout_id(raw_data)
+    status_reason = orderplace_status_and_reason_fraud(checkout, con_engine)
     orderplace_insert_to_db(status_reason, con_engine)
+    download_file = orderplace_checkout_id(checkout)
+    respone = HttpResponse(download_file.to_csv(index=False), content_type='text/csv')
+    respone['Content-Disposition'] = 'attachment; filename=checkout_id_%s.csv' % csv_file
     status = True
-    return render(request, 'upload-orderplace.html', {'status': status, 'message': "Upload Success"})
+
+    if download:
+        return respone
+    else:
+        return render(request, 'upload-orderplace.html',
+                      {'status': status, 'message': "Upload Success", 'respone': respone})
 
 
 def upload_bi_validation(request):
@@ -119,7 +140,7 @@ def upload_bi_validation(request):
     con_engine = connection_engine()
     raw_data = bi_validation_read_csv(csv_file)
     order_status = bi_validation_order_status_check(raw_data)
-    buyer_status = bi_validation_order_status_check(order_status)
+    buyer_status = bi_validation_buyer_status_check(order_status)
     hash_username = bi_validation_hash_username(buyer_status)
     bi_validation_insert_to_db(hash_username, con_engine)
     status = True

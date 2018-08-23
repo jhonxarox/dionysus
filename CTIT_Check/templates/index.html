@@ -12,6 +12,9 @@
 							<h3 class="panel-title">Checking Fraud Data</h3>
 							<h6>{{ status }}</h6>
 							<h6>{{ message }}</h6>
+							<h6>{{ start_date }}</h6>
+							<h6>{{ end_date }}</h6>
+							<h6>{{ all_data }}</h6>
 							<div class="panel-body">
 								<form action="/" method="post" enctype="multipart/form-data" name="getdataform" id="getdataform">
 								{% csrf_token %}
@@ -68,7 +71,7 @@
 										</div>
 									{% endfor %}
 								{% endif %}
-								<!-- RECENT PURCHASES -->
+								<!-- FRAUD DATA -->
 								<div class="panel">
 									<div class="panel-heading">
 										<h3 class="panel-title">Fraud Data</h3>
@@ -104,7 +107,7 @@
 										</div>
 									</div>
 								</div>
-								<!-- END RECENT PURCHASES -->
+								<!-- END FRAUD DATA -->
 							</div>
 					</div>
 					{% endif %}
@@ -124,6 +127,7 @@
 					</div>
 					{% endif %}
 				</div>
+
 			</div>
 			<!-- END MAIN CONTENT -->
 		</div>
