@@ -3,10 +3,10 @@
 connection_to_database = 'postgresql://postgres:admin123@localhost/FraudTest_db'
 
 # Minimal device
-minimal_device = 2
+minimal_device = 10
 
 # Minimal Time on Check CTIT (seconds)
-minimal_time_check_CTIT = 19
+minimal_time_check_CTIT = 20
 
 # Minimal Days for Device Check
 minimal_time_check_device = 60

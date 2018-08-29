@@ -14,3 +14,9 @@ class CheckingFraudForm(forms.Form):
 
 class uploadOrderplace(forms.Form):
     download = forms.BooleanField(required=False)
+
+
+class download(forms.Form):
+    media_download = forms.CharField(widget=forms.HiddenInput())
+    start_date_download = forms.CharField(widget=forms.HiddenInput())
+    end_date_download = forms.CharField(widget=forms.HiddenInput())

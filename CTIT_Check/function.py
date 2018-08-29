@@ -102,16 +102,35 @@ def install_app_version_check(raw_data, con_engine, platform):
         appversion = pd.read_sql(""" SELECT * 
                              FROM appversion """, cursor)
 
+    time = pd.to_datetime(raw_data['Install Time'])
+    time = pd.to_datetime(time)
+    time = time.sort_values()
+    time = time.reset_index(drop=True)
+
+    start = time.iloc[0].to_pydatetime()
+    end = time.iloc[-1].to_pydatetime()
+
     appversion = appversion[appversion['Platform'] == platform]
     appversion['Date Release'] = pd.to_datetime(appversion['Date Release'])
     appversion = appversion.sort_values('Date Release')
     appversion = appversion.reset_index(drop=True)
-    lastrec = len(appversion.index) - 1
 
-    if dt.datetime.now() <= appversion.iloc[lastrec]['Date Release'] + dt.timedelta(days=minimal_time_check_app_version):
-        appversion = appversion.tail(2)
-    else:
+    appversion_on_range = appversion[
+        (appversion['Date Release'] <= end) &
+        (appversion['Date Release'] >= start - dt.timedelta(days=7))]
+
+    if appversion_on_range.empty:
         appversion = appversion.tail(1)
+    else:
+        appversion = appversion_on_range
+
+    # lastrec = len(appversion.index) - 1
+    #
+    # if dt.datetime.now() <= appversion.iloc[lastrec]['Date Release'] + dt.timedelta(
+    #         days=minimal_time_check_app_version):
+    #     appversion = appversion.tail(2)
+    # else:
+    #     appversion = appversion.tail(1)
 
     raw_data = raw_data.merge(appversion, on=['App Version'], indicator='App Version Status', how='left')
     raw_data = raw_data.drop(['Platform_y', 'Date Release'], axis=1)
@@ -144,7 +163,7 @@ def install_insert_fraud_to_db(fraud_data, con_engine):
     with con_engine.connect() as cursor:
         all_fraud_data = pd.read_sql(""" SELECT * FROM fraud """, cursor)
     fraud_data = all_fraud_data.append(fraud_data)
-    fraud_data = fraud_data.drop_duplicates(keep='last')
+    fraud_data = fraud_data.drop_duplicates(keep='last', subset=['AppsFlyer ID'])
     fraud_data.to_sql(name='fraud', con=con_engine, if_exists='replace', index=False)
 
 
@@ -180,10 +199,10 @@ def orderplace_find_checkout_id(raw_data):
             s += '0'
         else:
             position += 16
-            while (ord(value[position]) >= 48) and (ord(value[position]) <= 57) and position < len(value):
+            while (ord(value[position]) >= 48) and (ord(value[position]) <= 57) and (position < len(value)):
                 s += value[position]
                 position += 1
-                if position == len(value) - 1 and (ord(value[position]) >= 48) and (ord(value[position]) <= 57):
+                if (position == len(value) - 1) and (ord(value[position]) >= 48) and (ord(value[position]) <= 57):
                     s += value[position]
                     break
         s = int(s)
@@ -237,13 +256,14 @@ def orderplace_insert_to_db(raw_data, con_engine):
     with con_engine.connect() as cursor:
         all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
     raw_data = all_orderplace_data.append(raw_data)
-    raw_data = raw_data.drop_duplicates(keep='last', subset=['Checkout ID'])
+    raw_data = raw_data.drop_duplicates(keep='last')
     raw_data.to_sql(name='orderplace', con=con_engine, if_exists='replace', index=False)
 
 
 def orderplace_checkout_id(raw_data):
     checkout_id = raw_data['Checkout ID']
     return checkout_id
+
 
 def bi_validation_read_csv(csv_filename):
     raw_data = pd.read_csv(csv_filename)
@@ -261,7 +281,7 @@ def bi_validation_read_csv(csv_filename):
 
 
 def bi_validation_order_status_check(raw_data):
-    raw_data['Order Status'] = np.where(
+    raw_data['Checkout Status'] = np.where(
         raw_data['fe_status'] == 'Completed', "Valid", np.where(
             raw_data['fe_status'] == 'Cancelled', "Invalid", "Pending"))
     return raw_data
@@ -288,39 +308,131 @@ def bi_validation_insert_to_db(raw_data, con_engine):
     raw_data = raw_data.drop_duplicates(keep='last', subset=['Checkout_ID', 'Order_SN'])
     raw_data.to_sql(name='validation', con=con_engine, if_exists='replace', index=False)
 
-def take_all_install_data_base_on_date(con_engine, start, end):
+
+def take_new_buyer_base_on_date(con_engine, start, end):
+    start = start.isoformat(' ')
+    end = end.isoformat(' ')
+
     with con_engine.connect() as cursor:
-        all_fraud_data = pd.read_sql(""" SELECT * FROM fraud """, cursor)
+        all_validation_data = pd.read_sql(""" SELECT * FROM validation """, cursor)
+        all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
+
+    event_time = all_orderplace_data[['Checkout ID', 'Event Time', 'Fraud Status']]
+    all_validation_data = event_time.join(all_validation_data, lsuffix='Checkout ID', rsuffix='Checkout_ID')
+    all_validation_data = all_validation_data.drop(columns='Checkout_ID')
+
+    all_validation_data[['Event Time']] = pd.to_datetime(all_validation_data['Event Time'])
+    all_validation_data = all_validation_data[
+        (all_validation_data['Event Time'] >= start) &
+        (all_validation_data['Event Time'] <= end) &
+        (all_validation_data['Buyer Status'] == "New")
+        ]
+
+    return all_validation_data
+
+
+def check_new_buyer(con_engine, data):
+    with con_engine.connect() as cursor:
         all_install_data = pd.read_sql(""" SELECT * FROM install """, cursor)
         all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
-        all_validation_data = pd.read_sql(""" SELECT * FROM validation """, cursor)
 
-    # all_install_data[['Attributed Touch Time']] = pd.to_datetime(all_install_data['Attributed Touch Time'])
-    # all_install_data = all_install_data[
-    #     (all_install_data['Attributed Touch Time']>= start) &
-    #     (all_install_data['Attributed Touch Time']<= end)]
-    #
-    # all_install_data = all_install_data[['AppsFlyer ID', 'Attributed Touch Time']]
-
-#     return all_install_data
-#
-#
-# def take_
-    new_buyer_order_valid = all_validation_data[
-        (all_validation_data['Buyer Status'] == "New") & (all_validation_data['Order Status'] == "Valid")]
-    all_orderplace_data[['Event Time']] = pd.to_datetime(all_orderplace_data['Event Time'])
-    all_orderplace_data = all_orderplace_data[
-        (all_orderplace_data['Event Time']>= start)&
-        (all_orderplace_data['Event Time']<= end)
-    ]
+    new_buyer = data[data['Buyer Status']=="New"]
     not_fraud_orderplace = all_orderplace_data[all_orderplace_data['Fraud Status'] == False]
     not_fraud_orderplace = not_fraud_orderplace.merge(all_install_data, how='left')
     not_fraud_orderplace = not_fraud_orderplace[not_fraud_orderplace['Attributed Touch Time'].notnull() == True]
 
-    result = new_buyer_order_valid.merge(not_fraud_orderplace, left_on='Checkout_ID', right_on='Checkout ID',
-                                         how='left')
-    result = result.drop(columns='Checkout_ID')
-    test = result[result['Checkout ID'].isnull()]
-    hasil = len(result) - len(test)
+    new_buyer = new_buyer
 
-    return hasil
+def take_all_install_base_on_date(con_engine, start, end):
+    start = start.isoformat(' ')
+    end = end.isoformat(' ')
+
+    with con_engine.connect() as cursor:
+        all_install_data = pd.read_sql(""" SELECT * FROM install """, cursor)
+
+    all_install_data = all_install_data[
+        (all_install_data['Install Time'] >= start) &
+        (all_install_data['Install Time'] <= end)
+        ]
+
+    return all_install_data
+
+
+def check_fraud_install(con_engine, data):
+    with con_engine.connect() as cursor:
+        all_fraud_data = pd.read_sql(""" SELECT * FROM fraud """, cursor)
+
+    data = data.merge(all_fraud_data, indicator='Fraud Status', how='left')
+    data['Fraud Status'] = np.where(data['Fraud Status'] == 'both', True, False)
+    return data
+
+
+def take_all_orderplace_base_on_date(con_engine, start, end):
+    start = start.isoformat(' ')
+    end = end.isoformat(' ')
+
+    with con_engine.connect() as cursor:
+        all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
+
+    all_orderplace_data = all_orderplace_data[
+        (all_orderplace_data['Event Time'] >= start) &
+        (all_orderplace_data['Event Time'] <= end)
+        ]
+
+    return all_orderplace_data
+
+def download_report(con_engine, start, end):
+    start = datetime.strptime(start,'%d-%m-%Y')
+    end = datetime.strptime(end,'%d-%m-%Y')
+
+    # print(start+'\n'+end)
+    with con_engine.connect() as cursor:
+        all_install_data = pd.read_sql(""" SELECT * FROM install """, cursor)
+        all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
+        all_validation_data = pd.read_sql(""" SELECT * FROM validation """, cursor)
+
+    table = all_orderplace_data.join(all_validation_data)
+    table = table.drop(columns='Checkout_ID')
+    data = pd.pivot_table(
+        table, columns='Buyer Status',
+        index=['Fraud Status', 'Checkout Status'],
+        aggfunc=[len],
+        values='Checkout ID',
+        fill_value=np.NAN)
+
+    install_data = all_install_data.drop(columns='Is Retargeting')
+    table = table.merge(install_data, how='left', on='AppsFlyer ID')
+    table = table[['AppsFlyer ID',
+                   'Attributed Touch Time',
+                   'Install Time',
+                   'Event Time',
+                   'Event Value',
+                   'Media Source',
+                   'Platform',
+                   'Device Type',
+                   'App Version',
+                   'Checkout ID',
+                   'Buyer Status',
+                   'Checkout Status',
+                   'OrderIDBefore',
+                   'Order_SN',
+                   'PurchaseDateBefore',
+                   'fe_status',
+                   'Campaign',
+                   'Campaign ID',
+                   'Site ID',
+                   'Original URL',
+                   'Fraud Status',
+                   'Fraud Reason']]
+
+    table = table.drop_duplicates(subset=['AppsFlyer ID', 'Checkout ID', 'Order_SN'])
+    table['Event Time'] = pd.to_datetime(table['Event Time'])
+    table = table[
+        (table['Event Time'] >= start) &
+        (table['Event Time'] <= end)
+        ]
+
+    # writer = pd.ExcelWriter('report.xlsx')
+    # table.to_excel(writer, 'Data', index=False)
+
+    return table

@@ -1,5 +1,5 @@
 import csv
-
+import io
 from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -17,26 +17,59 @@ def index(request):
             try:
                 status = True
                 media_sources = form.cleaned_data['media_sources']
-                # fraud_data = media_source[(
-                #         media_source['CTIT Status'] |
-                #         media_source['App Version Status'] |
-                #         media_source['Device Status'])]
                 start_date = form.cleaned_data['start_date']
                 end_date = form.cleaned_data['end_date']
 
-                all_data = take_all_install_data_base_on_date(connection_engine(), start_date, end_date)
-                # data = Install.objects.filter(media_source=media_sources)
-                # fraud_data = data[(data['CTIT Status'] | data['App Version Status'] | data['Device Status'])]
-                # bad_percentage = ((len(data.index) - len(fraud_data.index)) / ((len(data.index)) * 100))
-                # good_percentage = 100 - bad_percentage
+                all_install_base_on_date = take_all_install_base_on_date(connection_engine(), start_date, end_date)
+                install_data = check_fraud_install(connection_engine(), all_install_base_on_date)
+                install_total = len(install_data)
+                install_fraud = len(install_data[install_data['Fraud Status'] == True])
+                install_fraud_pecentage = (install_fraud / install_total) * 100
+                install_fraud_pecentage = round(install_fraud_pecentage, 2)
+
+                all_orderplace_base_on_date = take_all_orderplace_base_on_date(connection_engine(), start_date,
+                                                                               end_date)
+                orderplace_total = len(all_orderplace_base_on_date)
+                orderplace_fraud = len(all_orderplace_base_on_date[all_orderplace_base_on_date['Fraud Status'] == True])
+                orderplace_fraud_pecentage = (orderplace_fraud / orderplace_total) * 100
+                orderplace_fraud_pecentage = round(orderplace_fraud_pecentage, 2)
+
+                all_new_buyer_base_on_date = take_new_buyer_base_on_date(connection_engine(), start_date, end_date)
+                new_buyer_total = len(all_new_buyer_base_on_date)
+
+                new_buyer_valid_total = len(
+                    all_new_buyer_base_on_date[all_new_buyer_base_on_date['Checkout Status'] == "Valid"])
+                new_buyer_valid_total_percentage = (new_buyer_valid_total / new_buyer_total) * 100
+                new_buyer_valid_total_percentage = round(new_buyer_valid_total_percentage, 2)
+
+                new_buyer_invalid_total = len(
+                    all_new_buyer_base_on_date[all_new_buyer_base_on_date['Checkout Status'] == "Invalid"])
+                new_buyer_invalid_percentage = (new_buyer_invalid_total / new_buyer_total) * 100
+                new_buyer_invalid_percentage = round(new_buyer_invalid_percentage, 2)
+
+                start_date = start_date.strftime('%d-%m-%Y')
+                end_date = end_date.strftime('%d-%m-%Y')
                 return render(request, 'index.html', {'status': status,
-                                                      # 'good_percentage': good_percentage,
-                                                      # 'bad_percentage': bad_percentage,
                                                       'start_date': start_date,
                                                       'end_date': end_date,
-                                                      'all_data': all_data,
+
+                                                      'install_fraud': install_fraud,
+                                                      'install_fraud_pecentage': install_fraud_pecentage,
+                                                      'install_total': install_total,
+
+                                                      'orderplace_fraud': orderplace_fraud,
+                                                      'orderplace_fraud_pecentage': orderplace_fraud_pecentage,
+                                                      'orderplace_total': orderplace_total,
+
+                                                      'new_buyer_total': new_buyer_total,
+                                                      'new_buyer_valid_total': new_buyer_valid_total,
+                                                      'new_buyer_valid_total_percentage': new_buyer_valid_total_percentage,
+                                                      'new_buyer_invalid_total': new_buyer_invalid_total,
+                                                      'new_buyer_invalid_percentage': new_buyer_invalid_percentage,
+
                                                       'media_source': media_source,
                                                       'media_sources': media_sources,
+
                                                       'message': "valid true"})
 
             except Exception as e:
@@ -116,15 +149,15 @@ def upload_orderplace(request):
     status_reason = orderplace_status_and_reason_fraud(checkout, con_engine)
     orderplace_insert_to_db(status_reason, con_engine)
     download_file = orderplace_checkout_id(checkout)
-    respone = HttpResponse(download_file.to_csv(index=False), content_type='text/csv')
-    respone['Content-Disposition'] = 'attachment; filename=checkout_id_%s.csv' % csv_file
+    response = HttpResponse(download_file.to_csv(index=False), content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=checkout_id_%s.csv' % csv_file
     status = True
 
     if download:
-        return respone
+        return response
     else:
         return render(request, 'upload-orderplace.html',
-                      {'status': status, 'message': "Upload Success", 'respone': respone})
+                      {'status': status, 'message': "Upload Success", 'respone': response})
 
 
 def upload_bi_validation(request):
@@ -155,3 +188,17 @@ def alldata(request):
     # head = pd.DataFrame(list(output.values()))
     # body = pd.DataFrame(list())
     return render(request, 'alldata.html', {'data': contacts})
+
+
+def download_file_all(request):
+    if request.method == 'POST':
+        form = download(request.POST)
+        if form.is_valid():
+            output = io.BytesIO()
+            media = form.cleaned_data['media_download']
+            start_date = form.cleaned_data['start_date_download']
+            end_date = form.cleaned_data['end_date_download']
+            download_file = download_report(connection_engine(), start_date, end_date)
+            response = HttpResponse(download_file.to_csv(index=False), content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename=report.csv'
+            return response

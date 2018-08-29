@@ -18,4 +18,5 @@ urlpatterns = [
     # path('typography/', views.upload, name='typography'),
     # path('icons/', views.upload, name='icons'),
     path('alldata/', views.alldata, name='alldata'),
+    path('download_all/', views.download_file_all, name='download')
 ]

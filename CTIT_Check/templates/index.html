@@ -10,11 +10,9 @@
 					<div class="panel panel-headline">
 						<div class="panel-heading">
 							<h3 class="panel-title">Checking Fraud Data</h3>
-							<h6>{{ status }}</h6>
-							<h6>{{ message }}</h6>
-							<h6>{{ start_date }}</h6>
-							<h6>{{ end_date }}</h6>
-							<h6>{{ all_data }}</h6>
+							<!--<h6>{{ status }}</h6>-->
+							<!--<h6>{{ message }}</h6>-->
+							<!--<h6>{{ all_data }}</h6>-->
 							<div class="panel-body">
 								<form action="/" method="post" enctype="multipart/form-data" name="getdataform" id="getdataform">
 								{% csrf_token %}
@@ -28,9 +26,7 @@
 										</select>
 									</div>
 									<div class="col-md-4">
-										<a href="alldata/">
-											<h4>Check All Data</h4>
-										</a>
+										<input type="submit" form="getdataform" class="btn btn-primary"/>
 									</div>
 								</div>
 								<div class="row">
@@ -42,9 +38,7 @@
 										<h4>End Date</h4>
 										<input type="date" name="end_date" id="end_date">
 									</div>
-									<div class="col-md-4">
-										<input type="submit" form="getdataform" class="btn btn-primary"/>
-									</div>
+
 								</div>
 								</form>
 							</div>
@@ -71,43 +65,157 @@
 										</div>
 									{% endfor %}
 								{% endif %}
-								<!-- FRAUD DATA -->
-								<div class="panel">
+								<!-- DATA STATISTIC -->
+								<div class="panel panel-heading">
 									<div class="panel-heading">
-										<h3 class="panel-title">Fraud Data</h3>
+										<h1 class="panel-title">Search Result</h1>
+										<h5>from <b>{{ start_date }}</b> to <b>{{ end_date }}</b></h5>
 										<div class="right">
 											<button type="button" class="btn-toggle-collapse"><i class="lnr lnr-chevron-up"></i></button>
 											<button type="button" class="btn-remove"><i class="lnr lnr-cross"></i></button>
 										</div>
 									</div>
 									<div class="panel-body no-padding">
-										<div class="col-md-3">
-											<div class="metric">
-												<span class="icon"><i class="fa fa-times"></i></span>
-												<p>
-													<span class="number">{{bad_percentage}}</span>
-													<span class="title">Fraud</span>
-												</p>
+										<!-- First Row -->
+										<div class="row">
+											<!-- Install Total-->
+											<div class="col-md-4">
+												<h4 class="text-center text-muted">Install Data</h4>
+												<div class="metric">
+													<span class="icon"><i class="fas fa-database"></i></span>
+													<p>
+														<span class="number">{{ install_total }}</span>
+														<span class="title">Total Install</span>
+													</p>
+												</div>
 											</div>
-										</div>
-										<div class="col-md-3">
-											<div class="metric">
-												<span class="icon"><i class="fa fa-check-circle"></i></span>
-												<p>
-													<span class="number">{{good_percentage}}</span>
-													<span class="title">Not Fraud</span>
-												</p>
+											<!--  End Install Total -->
+
+											<!-- Orderplace Total -->
+											<div class="col-md-4">
+												<h4 class="text-center text-muted">Orderplace Data</h4>
+												<div class="metric">
+													<span class="icon"><i class="fas fa-database"></i></span>
+													<p>
+														<span class="number">{{ orderplace_total }}</span>
+														<span class="title">Orderplace Total</span>
+													</p>
+												</div>
 											</div>
+											<!-- End Orderplace Total -->
+
+											<!-- Buyer Total -->
+											<div class="col-md-4">
+												<h4 class="text-center text-muted">New Buyer Data</h4>
+												<div class="metric">
+													<span class="icon"><i class="fas fa-database"></i></span>
+													<p>
+														<span class="number">{{ new_buyer_total }}</span>
+														<span class="title">New Buyer Total</span>
+													</p>
+												</div>
+											</div>
+											<!-- Buyer Total -->
 										</div>
+										<!-- End First Row -->
+
+										<!-- Second Row -->
+										<div class="row">
+											<!-- Install Fraud -->
+											<div class="col-md-4">
+												<div class="metric">
+													<span class="icon"><i class="fas fa-times-circle"></i></span>
+													<p>
+														<span class="number">{{ install_fraud }}</span>
+														<span class="title">Fraud Install</span>
+													</p>
+												</div>
+											</div>
+											<!-- End Install Fraud -->
+
+											<!-- Orderplace Fraud -->
+											<div class="col-md-4">
+												<div class="metric">
+													<span class="icon"><i class="fas fa-times-circle"></i></span>
+													<p>
+														<span class="number">{{ orderplace_fraud }}</span>
+														<span class="title">Fraud Orderplace</span>
+													</p>
+												</div>
+											</div>
+											<!-- End Orderplace Fraud -->
+
+											<!-- Buyer New -->
+											<div class="col-md-4">
+												<div class="metric">
+													<span class="icon"><i class="fas fa-check-circle"></i></span>
+													<p>
+														<span class="number">{{ new_buyer_valid_total }} ({{ new_buyer_valid_total_percentage }} %)</span>
+														<span class="title">New Buyer Valid</span>
+													</p>
+												</div>
+											</div>
+											<!-- End Buyer New -->
+										</div>
+										<!-- End Second Row -->
+
+										<!-- Third Row -->
+										<div class="row">
+											<!-- Install Fraud Rate -->
+											<div class="col-md-4">
+												<div class="metric">
+													<span class="icon"><i class="fas fa-percent"></i></span>
+													<p>
+														<span class="number">{{ install_fraud_pecentage }} %</span>
+														<span class="title">Fraud Rate</span>
+													</p>
+												</div>
+											</div>
+											<!-- End Install Fraud Rate -->
+
+											<!-- Orderplace Fraud Rate -->
+											<div class="col-md-4">
+												<div class="metric">
+													<span class="icon"><i class="fas fa-percent"></i></span>
+													<p>
+														<span class="number">{{ orderplace_fraud_pecentage }} %</span>
+														<span class="title">Orderplace Rate</span>
+													</p>
+												</div>
+											</div>
+											<!-- End Orderplace Fraud Rate -->
+
+											<!-- Buyer New Rate -->
+											<div class="col-md-4">
+												<div class="metric">
+													<span class="icon"><i class="fas fa-times-circle"></i></span>
+													<p>
+														<span class="number">{{ new_buyer_invalid_total }} ({{ new_buyer_invalid_percentage }}%)</span>
+														<span class="title">New Buyer Invalid</span>
+													</p>
+												</div>
+											</div>
+											<!-- End Buyer New Rate -->
+										</div>
+										<!-- End Third Row -->
 									</div>
 									<div class="panel-footer">
 										<div class="row">
-											<div class="col-md-6"><span class="panel-note"><i class="fa fa-clock-o"></i> Last 24 hours</span></div>
-											<div class="col-md-6 text-right"><a href="#" class="btn btn-primary">View All Purchases</a></div>
+											<div class="col-md-12 text-right">
+												<!--<input class="btn btn-primary" type="button" value="Download" onclick="window.open('download_report')">-->
+												<form method="post" action="download_all/">
+													{% csrf_token %}
+													{{ form }}
+													<input type="hidden" name="start_date_download" id="start_date_download" value={{ start_date }} />
+													<input type="hidden" name="end_date_download" id="end_date_download" value={{ end_date }} />
+													<input type="hidden" name="media_download" id="media_download" value={{ media_sources }} />
+												   <button class="btn btn-primary" type="submit">Download!</button>
+												</form>
+											</div>
 										</div>
 									</div>
 								</div>
-								<!-- END FRAUD DATA -->
+								<!-- END DATA STATISTIC -->
 							</div>
 					</div>
 					{% endif %}
