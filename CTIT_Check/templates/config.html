@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="main">
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="container-fluid">
+            <!-- CONFIG FROM -->
+            <div class="panel panel-headline">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Configuration</h3>
+                    <div class="panel-body">
+                        <form action="/config" method="post" name="getdataform" id="getdataform">
+                            {% csrf_token %}
+                            {{ form }}
+                            <div class="row">
+                                <div class="col-md-5"></div>
+                                <div class="col-md-1"><p class="text-center">Include</p></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2"><p class="text-right">CTIT Time </p></div>
+                                <div class="col-md-2"><input type="number" name="ctit" value=20></div>
+                                <div class="col-md-1"><p>Seconds</p></div>
+                                <div class="col-md-1">
+                                    <label class="fancy-checkbox text-center">
+                                        <input type="checkbox">
+                                        <span></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2"><p class="text-right">Device Time </p></div>
+                                <div class="col-md-2"><input type="number" name="device" value=30></div>
+                                <div class="col-md-1"><p>Days</p></div>
+                                <div class="col-md-1">
+                                    <label class="fancy-checkbox text-center">
+                                        <input type="checkbox">
+                                        <span></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2"><p class="text-right">Minimal Device</p></div>
+                                <div class="col-md-2"><input type="number" name="device" value=30></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2"><p class="text-right">App Version Time </p></div>
+                                <div class="col-md-2"><input type="number" name="app" value=30></div>
+                                <div class="col-md-1"><p>Days</p></div>
+                                <div class="col-md-1">
+                                    <label class="fancy-checkbox text-center">
+                                        <input type="checkbox">
+                                        <span></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-10"></div>
+                                <div class="col-md-2">
+                                    <input type="submit" class="btn btn-primary btn-block s">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- END CONFIG FROM -->
+
+            <!--ADD APP VERSION-->
+            <div class="panel panel-headline">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Configuration</h3>
+                    <div class="panel-body">
+                        <form action="/config" method="post" name="getdataform" id="">
+                            {% csrf_token %}
+                            {{ form }}
+                            <div class="row">
+                                <div class="col-md-2"><p class="text-center lead">Platform<p></p></div>
+                                <div class="col-md-2"><p class="text-center lead">App Version<p></p></div>
+                                <div class="col-md-2"><p class="text-center lead">Date Release</p></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <select class="form-control">
+                                        <option value="Test">Test</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2"><input type="text" name="ctit" class="form-control"></div>
+                                <div class="col-md-2"><input type="date" name="end_date" id="release_date"></div>
+                                <div class="col-md-2">
+                                    <input type="submit" class="btn btn-primary btn-block s">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!--END ADD APP VERSION-->
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- START ERROR -->
+                    <!--<div class="panel">-->
+                        <!--<div class="alert alert-danger alert-dismissible" role="alert">-->
+                            <!--<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>-->
+                            <!--<i class="fa fa-times-circle"></i> {{ error }}-->
+                        <!--</div>-->
+                    <!--</div>-->
+                    <!-- END ERROR -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END MAIN CONTENT -->
+</div>
+
+{% endblock %}

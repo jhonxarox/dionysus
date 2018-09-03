@@ -19,35 +19,62 @@ def index(request):
                 media_sources = form.cleaned_data['media_sources']
                 start_date = form.cleaned_data['start_date']
                 end_date = form.cleaned_data['end_date']
+                end_date = end_date + dt.timedelta(days=1)
 
-                all_install_base_on_date = take_all_install_base_on_date(connection_engine(), start_date, end_date)
+                all_install_base_on_date = take_all_install_base_on_date(connection_engine(), start_date, end_date,
+                                                                         media_sources)
                 install_data = check_fraud_install(connection_engine(), all_install_base_on_date)
                 install_total = len(install_data)
                 install_fraud = len(install_data[install_data['Fraud Status'] == True])
                 install_fraud_pecentage = (install_fraud / install_total) * 100
                 install_fraud_pecentage = round(install_fraud_pecentage, 2)
 
-                all_orderplace_base_on_date = take_all_orderplace_base_on_date(connection_engine(), start_date,
-                                                                               end_date)
-                orderplace_total = len(all_orderplace_base_on_date)
-                orderplace_fraud = len(all_orderplace_base_on_date[all_orderplace_base_on_date['Fraud Status'] == True])
-                orderplace_fraud_pecentage = (orderplace_fraud / orderplace_total) * 100
-                orderplace_fraud_pecentage = round(orderplace_fraud_pecentage, 2)
+                all_purchase_base_on_date = download_report(connection_engine(), start_date,
+                                                                               end_date, media_sources)
+                purchase_total = len(all_purchase_base_on_date)
+                purchase_fraud = len(all_purchase_base_on_date[all_purchase_base_on_date['Fraud Status'] == True])
+                purchase_fraud_pecentage = (purchase_fraud / purchase_total) * 100
+                purchase_fraud_pecentage = round(purchase_fraud_pecentage, 2)
 
-                all_new_buyer_base_on_date = take_new_buyer_base_on_date(connection_engine(), start_date, end_date)
-                new_buyer_total = len(all_new_buyer_base_on_date)
+                data = download_report(connection_engine(), start_date, end_date, media_sources)
 
-                new_buyer_valid_total = len(
-                    all_new_buyer_base_on_date[all_new_buyer_base_on_date['Checkout Status'] == "Valid"])
-                new_buyer_valid_total_percentage = (new_buyer_valid_total / new_buyer_total) * 100
-                new_buyer_valid_total_percentage = round(new_buyer_valid_total_percentage, 2)
+                # -------------------------------------------SUSPECTED FRAUD-----------------------------------------
 
-                new_buyer_invalid_total = len(
-                    all_new_buyer_base_on_date[all_new_buyer_base_on_date['Checkout Status'] == "Invalid"])
-                new_buyer_invalid_percentage = (new_buyer_invalid_total / new_buyer_total) * 100
-                new_buyer_invalid_percentage = round(new_buyer_invalid_percentage, 2)
+                suspected_fraud = data.loc[data['Fraud Status'] == True]
+
+                suspec_valid = suspected_fraud.loc[suspected_fraud['Checkout Status'] == "Valid"]
+                suspec_valid_new = len(suspec_valid.loc[suspec_valid['Buyer Status'] == "New"])
+                suspec_valid_repeat = len(suspec_valid.loc[suspec_valid['Buyer Status'] == "Repeat"])
+
+                suspec_invalid = suspected_fraud.loc[suspected_fraud['Checkout Status'] == "Invalid"]
+                suspec_invalid_new = len(suspec_invalid.loc[suspec_invalid['Buyer Status'] == "New"])
+                suspec_invalid_repeat = len(suspec_invalid.loc[suspec_invalid['Buyer Status'] == "Repeat"])
+
+                suspec_pending = suspected_fraud.loc[suspected_fraud['Checkout Status'] == "Pending"]
+                suspec_pending_new = len(suspec_pending.loc[suspec_pending['Buyer Status'] == "New"])
+                suspec_pending_repeat = len(suspec_pending.loc[suspec_pending['Buyer Status'] == "Repeat"])
+
+                # -------------------------------------------END SUSPECTED FRAUD----------------------------------------
+
+                # -------------------------------------------TRUSTED INSTALL--------------------------------------------
+                trusted_install = data.loc[data['Fraud Status'] == False]
+
+                trust_valid = trusted_install.loc[trusted_install['Checkout Status'] == "Valid"]
+                trust_valid_new = len(trust_valid.loc[trust_valid['Buyer Status'] == "New"])
+                trust_valid_repeat = len(trust_valid.loc[trust_valid['Buyer Status'] == "Repeat"])
+
+                trust_invalid = trusted_install.loc[trusted_install['Checkout Status'] == "Invalid"]
+                trust_invalid_new = len(trust_invalid.loc[trust_invalid['Buyer Status'] == "New"])
+                trust_invalid_repeat = len(trust_invalid.loc[trust_invalid['Buyer Status'] == "Repeat"])
+
+                trust_pending = trusted_install.loc[trusted_install['Checkout Status'] == "Pending"]
+                trust_pending_new = len(trust_pending.loc[trust_pending['Buyer Status'] == "New"])
+                trust_pending_repeat = len(trust_pending.loc[trust_pending['Buyer Status'] == "Repeat"])
+
+                # -------------------------------------------END TRUSTED INSTALL----------------------------------------
 
                 start_date = start_date.strftime('%d-%m-%Y')
+                end_date = end_date - dt.timedelta(days=1)
                 end_date = end_date.strftime('%d-%m-%Y')
                 return render(request, 'index.html', {'status': status,
                                                       'start_date': start_date,
@@ -57,15 +84,23 @@ def index(request):
                                                       'install_fraud_pecentage': install_fraud_pecentage,
                                                       'install_total': install_total,
 
-                                                      'orderplace_fraud': orderplace_fraud,
-                                                      'orderplace_fraud_pecentage': orderplace_fraud_pecentage,
-                                                      'orderplace_total': orderplace_total,
+                                                      'purchase_fraud': purchase_fraud,
+                                                      'purchase_fraud_pecentage': purchase_fraud_pecentage,
+                                                      'purchase_total': purchase_total,
 
-                                                      'new_buyer_total': new_buyer_total,
-                                                      'new_buyer_valid_total': new_buyer_valid_total,
-                                                      'new_buyer_valid_total_percentage': new_buyer_valid_total_percentage,
-                                                      'new_buyer_invalid_total': new_buyer_invalid_total,
-                                                      'new_buyer_invalid_percentage': new_buyer_invalid_percentage,
+                                                      'trust_valid_new': trust_valid_new,
+                                                      'trust_valid_repeat': trust_valid_repeat,
+                                                      'trust_invalid_new': trust_invalid_new,
+                                                      'trust_invalid_repeat': trust_invalid_repeat,
+                                                      'trust_pending_new' : trust_pending_new,
+                                                      'trust_pending_repeat': trust_pending_repeat,
+
+                                                      'suspec_valid_new': suspec_valid_new,
+                                                      'suspec_valid_repeat': suspec_valid_repeat,
+                                                      'suspec_invalid_new': suspec_invalid_new,
+                                                      'suspec_invalid_repeat': suspec_invalid_repeat,
+                                                      'suspec_pending_new': suspec_pending_new,
+                                                      'suspec_pending_repeat': suspec_pending_repeat,
 
                                                       'media_source': media_source,
                                                       'media_sources': media_sources,
@@ -92,18 +127,6 @@ def index(request):
                                               'media_source': media_source})
 
 
-def elements(request):
-    return render(request, 'elements.html', {})
-
-
-def charts(request):
-    return render(request, 'charts.html', {})
-
-
-def panels(request):
-    return render(request, 'panels.html', {})
-
-
 def upload_install(request):
     if "GET" == request.method:
         status = False
@@ -123,6 +146,7 @@ def upload_install(request):
     fraud_data = install_fraud_check(data)
     install_insert_to_db(data, con_engine)
     install_insert_fraud_to_db(fraud_data, con_engine)
+    update_if_install_uploaded(con_engine)
     status = True
     return render(request, 'upload-install.html', {'status': status, 'message': "Upload Success"})
 
@@ -194,11 +218,34 @@ def download_file_all(request):
     if request.method == 'POST':
         form = download(request.POST)
         if form.is_valid():
-            output = io.BytesIO()
             media = form.cleaned_data['media_download']
             start_date = form.cleaned_data['start_date_download']
             end_date = form.cleaned_data['end_date_download']
-            download_file = download_report(connection_engine(), start_date, end_date)
+            download_file = download_report(connection_engine(), start_date, end_date, media)
             response = HttpResponse(download_file.to_csv(index=False), content_type='text/csv')
             response['Content-Disposition'] = 'attachment; filename=report.csv'
             return response
+
+
+def config(request):
+    return render(request, 'config.html', {})
+
+
+ # all_new_buyer_base_on_date = take_new_buyer_base_on_date(connection_engine(), start_date, end_date)
+                # new_buyer_total = len(all_new_buyer_base_on_date)
+                #
+                # new_buyer_valid_total = len(
+                #     all_new_buyer_base_on_date[all_new_buyer_base_on_date['Checkout Status'] == "Valid"])
+                # new_buyer_valid_total_percentage = (new_buyer_valid_total / new_buyer_total) * 100
+                # new_buyer_valid_total_percentage = round(new_buyer_valid_total_percentage, 2)
+                #
+                # new_buyer_invalid_total = len(
+                #     all_new_buyer_base_on_date[all_new_buyer_base_on_date['Checkout Status'] == "Invalid"])
+                # new_buyer_invalid_percentage = (new_buyer_invalid_total / new_buyer_total) * 100
+                # new_buyer_invalid_percentage = round(new_buyer_invalid_percentage, 2)
+
+# 'new_buyer_total': new_buyer_total,
+# 'new_buyer_valid_total': new_buyer_valid_total,
+# 'new_buyer_valid_total_percentage': new_buyer_valid_total_percentage,
+# 'new_buyer_invalid_total': new_buyer_invalid_total,
+# 'new_buyer_invalid_percentage': new_buyer_invalid_percentage,

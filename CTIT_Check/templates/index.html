@@ -6,7 +6,7 @@
 			<!-- MAIN CONTENT -->
 			<div class="main-content">
 				<div class="container-fluid">
-					<!-- OVERVIEW -->
+					<!-- SEARCHING FROM -->
 					<div class="panel panel-headline">
 						<div class="panel-heading">
 							<h3 class="panel-title">Checking Fraud Data</h3>
@@ -44,11 +44,24 @@
 							</div>
 						</div>
 					</div>
-					<!-- END OVERVIEW -->
-
-					{% if status%}
+					<!-- END SEARCHING FROM -->
+					{% if error %}
 					<div class="row">
 							<div class="col-md-12">
+								<!-- START ERROR -->
+								<div class="panel">
+									<div class="alert alert-danger alert-dismissible" role="alert">
+										<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+										<i class="fa fa-times-circle"></i> {{ error }}
+									</div>
+								</div>
+								<!-- END ERROR -->
+							</div>
+					</div>
+					{% endif %}
+					{% if status%}
+					<div class="row">
+						<div class="col-md-12">
 								{% if form.errors %}
 									{% for field in form %}
 										{% for error in field.errors %}
@@ -79,7 +92,7 @@
 										<!-- First Row -->
 										<div class="row">
 											<!-- Install Total-->
-											<div class="col-md-4">
+											<div class="col-md-6">
 												<h4 class="text-center text-muted">Install Data</h4>
 												<div class="metric">
 													<span class="icon"><i class="fas fa-database"></i></span>
@@ -91,38 +104,25 @@
 											</div>
 											<!--  End Install Total -->
 
-											<!-- Orderplace Total -->
-											<div class="col-md-4">
-												<h4 class="text-center text-muted">Orderplace Data</h4>
+											<!-- Purchase Total -->
+											<div class="col-md-6">
+												<h4 class="text-center text-muted">Purchase Data</h4>
 												<div class="metric">
 													<span class="icon"><i class="fas fa-database"></i></span>
 													<p>
-														<span class="number">{{ orderplace_total }}</span>
-														<span class="title">Orderplace Total</span>
+														<span class="number">{{ purchase_total }}</span>
+														<span class="title">Purchase Total</span>
 													</p>
 												</div>
 											</div>
 											<!-- End Orderplace Total -->
-
-											<!-- Buyer Total -->
-											<div class="col-md-4">
-												<h4 class="text-center text-muted">New Buyer Data</h4>
-												<div class="metric">
-													<span class="icon"><i class="fas fa-database"></i></span>
-													<p>
-														<span class="number">{{ new_buyer_total }}</span>
-														<span class="title">New Buyer Total</span>
-													</p>
-												</div>
-											</div>
-											<!-- Buyer Total -->
 										</div>
 										<!-- End First Row -->
 
 										<!-- Second Row -->
 										<div class="row">
 											<!-- Install Fraud -->
-											<div class="col-md-4">
+											<div class="col-md-6">
 												<div class="metric">
 													<span class="icon"><i class="fas fa-times-circle"></i></span>
 													<p>
@@ -134,35 +134,23 @@
 											<!-- End Install Fraud -->
 
 											<!-- Orderplace Fraud -->
-											<div class="col-md-4">
+											<div class="col-md-6">
 												<div class="metric">
 													<span class="icon"><i class="fas fa-times-circle"></i></span>
 													<p>
-														<span class="number">{{ orderplace_fraud }}</span>
-														<span class="title">Fraud Orderplace</span>
+														<span class="number">{{ purchase_fraud }}</span>
+														<span class="title">Fraud Purchase</span>
 													</p>
 												</div>
 											</div>
 											<!-- End Orderplace Fraud -->
-
-											<!-- Buyer New -->
-											<div class="col-md-4">
-												<div class="metric">
-													<span class="icon"><i class="fas fa-check-circle"></i></span>
-													<p>
-														<span class="number">{{ new_buyer_valid_total }} ({{ new_buyer_valid_total_percentage }} %)</span>
-														<span class="title">New Buyer Valid</span>
-													</p>
-												</div>
-											</div>
-											<!-- End Buyer New -->
 										</div>
 										<!-- End Second Row -->
 
 										<!-- Third Row -->
 										<div class="row">
 											<!-- Install Fraud Rate -->
-											<div class="col-md-4">
+											<div class="col-md-6">
 												<div class="metric">
 													<span class="icon"><i class="fas fa-percent"></i></span>
 													<p>
@@ -174,28 +162,17 @@
 											<!-- End Install Fraud Rate -->
 
 											<!-- Orderplace Fraud Rate -->
-											<div class="col-md-4">
+											<div class="col-md-6">
 												<div class="metric">
 													<span class="icon"><i class="fas fa-percent"></i></span>
 													<p>
-														<span class="number">{{ orderplace_fraud_pecentage }} %</span>
-														<span class="title">Orderplace Rate</span>
+														<span class="number">{{ purchase_fraud_pecentage }} %</span>
+														<span class="title">Purchase Rate</span>
 													</p>
 												</div>
 											</div>
 											<!-- End Orderplace Fraud Rate -->
 
-											<!-- Buyer New Rate -->
-											<div class="col-md-4">
-												<div class="metric">
-													<span class="icon"><i class="fas fa-times-circle"></i></span>
-													<p>
-														<span class="number">{{ new_buyer_invalid_total }} ({{ new_buyer_invalid_percentage }}%)</span>
-														<span class="title">New Buyer Invalid</span>
-													</p>
-												</div>
-											</div>
-											<!-- End Buyer New Rate -->
 										</div>
 										<!-- End Third Row -->
 									</div>
@@ -208,7 +185,7 @@
 													{{ form }}
 													<input type="hidden" name="start_date_download" id="start_date_download" value={{ start_date }} />
 													<input type="hidden" name="end_date_download" id="end_date_download" value={{ end_date }} />
-													<input type="hidden" name="media_download" id="media_download" value={{ media_sources }} />
+													<input type="hidden" name="media_download" id="media_download" value="{{ media_sources }}" />
 												   <button class="btn btn-primary" type="submit">Download!</button>
 												</form>
 											</div>
@@ -217,23 +194,114 @@
 								</div>
 								<!-- END DATA STATISTIC -->
 							</div>
-					</div>
-					{% endif %}
 
-					{% if error %}
+					</div>
+					<!--TABLE -->
 					<div class="row">
-							<div class="col-md-12">
-								<!-- START ERROR -->
-								<div class="panel">
-									<div class="alert alert-danger alert-dismissible" role="alert">
-										<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-										<i class="fa fa-times-circle"></i> {{ error }}
+						<div class="col-md-6">
+							<!-- TASKS -->
+							<div class="panel">
+								<div class="panel-heading">
+									<h3 class="panel-title">Trusted Install</h3>
+									<div class="right">
+										<button type="button" class="btn-toggle-collapse"><i class="lnr lnr-chevron-up"></i></button>
+										<button type="button" class="btn-remove"><i class="lnr lnr-cross"></i></button>
 									</div>
 								</div>
-								<!-- END ERROR -->
+								<div class="panel-body">
+									<table class="table table-striped">
+										<thead><tr><th>Valid Transaction</th><th></th></tr></thead>
+										<tbody>
+											<tr>
+												<td class="text-right">New Buyer</td>
+												<td>{{ trust_valid_new }}</td>
+											</tr>
+											<tr>
+												<td class="text-right">Repeat Buyer</td>
+												<td>{{ trust_valid_repeat }}</td>
+											</tr>
+										</tbody>
+										<thead><tr><th>Invalid Transaction</th><th></th></tr></thead>
+										<tbody>
+											<tr>
+												<td class="text-right">New Buyer</td>
+												<td>{{ trust_invalid_new }}</td>
+											</tr>
+											<tr>
+												<td class="text-right">Repeat Buyer</td>
+												<td>{{ trust_invalid_repeat }}</td>
+											</tr>
+										</tbody>
+										<thead><tr><th>Pending Transaction</th><th></th></tr></thead>
+										<tbody>
+											<tr>
+												<td class="text-right">New Buyer</td>
+												<td>{{trust_pending_new }}</td>
+											</tr>
+											<tr>
+												<td class="text-right">Repeat Buyer</td>
+												<td>{{ trust_pending_repeat }}</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
 							</div>
+							<!-- END TASKS -->
+						</div>
+						<div class="col-md-6">
+							<!-- TASKS -->
+							<div class="panel">
+								<div class="panel-heading">
+									<h3 class="panel-title">Suspected Fraud</h3>
+									<div class="right">
+										<button type="button" class="btn-toggle-collapse"><i class="lnr lnr-chevron-up"></i></button>
+										<button type="button" class="btn-remove"><i class="lnr lnr-cross"></i></button>
+									</div>
+								</div>
+								<div class="panel-body">
+									<table class="table table-striped">
+										<thead><tr><th>Valid Transaction</th><th></th></tr></thead>
+										<tbody>
+											<tr>
+												<td class="text-right">New Buyer</td>
+												<td>{{ suspec_valid_new }}</td>
+											</tr>
+											<tr>
+												<td class="text-right">Repeat Buyer</td>
+												<td>{{ suspec_valid_repeat }}</td>
+											</tr>
+										</tbody>
+										<thead><tr><th>Invalid Transaction</th><th></th></tr></thead>
+										<tbody>
+											<tr>
+												<td class="text-right">New Buyer</td>
+												<td>{{ suspec_invalid_new }}</td>
+											</tr>
+											<tr>
+												<td class="text-right">Repeat Buyer</td>
+												<td>{{ suspec_invalid_repeat }}</td>
+											</tr>
+										</tbody>
+										<thead><tr><th>Pending Transaction</th><th></th></tr></thead>
+										<tbody>
+											<tr>
+												<td class="text-right">New Buyer</td>
+												<td>{{ suspec_pending_new }}</td>
+											</tr>
+											<tr>
+												<td class="text-right">Repeat Buyer</td>
+												<td>{{ suspec_pending_repeat }}</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+							<!-- END TASKS -->
+						</div>
 					</div>
+					<!--END OF TABLE -->
 					{% endif %}
+
 				</div>
 
 			</div>

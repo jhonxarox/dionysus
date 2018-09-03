@@ -11,6 +11,7 @@ import datetime as dt
 import sqlalchemy as sa
 import math
 import hashlib
+import ast
 from datetime import datetime
 from .config import *
 
@@ -54,6 +55,15 @@ def install_read_csv(csv_filename):
 
 # CTIT Check on raw data
 def install_ctit_check(raw_data):
+
+    with connection_engine().connect as cursor:
+        all_config_data = pd.read_sql(""" SELECT * FROM config """, cursor)
+
+    for index, row in all_config_data.iterrows():
+        if row['Config'] == "CTIT Time":
+            minimal_time_check_CTIT = row.at['Value']
+            break
+
     raw_data['CTIT Status'] = False
     for index, row in raw_data.iterrows():
         if not isinstance(row['Attributed Touch Time'], str) and math.isnan(row['Attributed Touch Time']):
@@ -75,6 +85,13 @@ def install_device_check(raw_data, con_engine):
         white_list_device = pd.read_sql(""" SELECT "Attributed Touch Time", "Device Type" 
                                         FROM install
                                         """, cursor)
+        all_config_data = pd.read_sql(""" SELECT * FROM config """, cursor)
+
+    for index, row in all_config_data.iterrows():
+        if row['Config'] == "Device Time":
+            minimal_time_check_device = row.at['Value']
+        elif row['Config'] == "Minimal Device":
+            minimal_device = row.at['Value']
 
     white_list_device['Attributed Touch Time'] = pd.to_datetime(white_list_device['Attributed Touch Time'])
     white_list_device = white_list_device[
@@ -101,6 +118,11 @@ def install_app_version_check(raw_data, con_engine, platform):
     with con_engine.connect() as cursor:
         appversion = pd.read_sql(""" SELECT * 
                              FROM appversion """, cursor)
+        all_config_data = pd.read_sql(""" SELECT * FROM config """, cursor)
+
+    for index, row in all_config_data.iterrows():
+        if row['Config']=="App Time":
+            App_Time = row.at['Value']
 
     time = pd.to_datetime(raw_data['Install Time'])
     time = pd.to_datetime(time)
@@ -117,7 +139,7 @@ def install_app_version_check(raw_data, con_engine, platform):
 
     appversion_on_range = appversion[
         (appversion['Date Release'] <= end) &
-        (appversion['Date Release'] >= start - dt.timedelta(days=7))]
+        (appversion['Date Release'] >= start - dt.timedelta(days=App_Time))]
 
     if appversion_on_range.empty:
         appversion = appversion.tail(1)
@@ -336,17 +358,19 @@ def check_new_buyer(con_engine, data):
         all_install_data = pd.read_sql(""" SELECT * FROM install """, cursor)
         all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
 
-    new_buyer = data[data['Buyer Status']=="New"]
+    new_buyer = data[data['Buyer Status'] == "New"]
     not_fraud_orderplace = all_orderplace_data[all_orderplace_data['Fraud Status'] == False]
     not_fraud_orderplace = not_fraud_orderplace.merge(all_install_data, how='left')
     not_fraud_orderplace = not_fraud_orderplace[not_fraud_orderplace['Attributed Touch Time'].notnull() == True]
 
     new_buyer = new_buyer
 
-def take_all_install_base_on_date(con_engine, start, end):
+
+def take_all_install_base_on_date(con_engine, start, end, media):
     start = start.isoformat(' ')
     end = end.isoformat(' ')
-
+    media = pd.DataFrame({'Media Source': media})
+    # print(media)
     with con_engine.connect() as cursor:
         all_install_data = pd.read_sql(""" SELECT * FROM install """, cursor)
 
@@ -354,6 +378,11 @@ def take_all_install_base_on_date(con_engine, start, end):
         (all_install_data['Install Time'] >= start) &
         (all_install_data['Install Time'] <= end)
         ]
+
+    all_install_data = all_install_data.merge(media, on=['Media Source'], indicator='Check', how='left')
+    all_install_data['Check'] = np.where(all_install_data['Check'] == 'both', True, False)
+    all_install_data = all_install_data[all_install_data['Check'] == True]
+    all_install_data = all_install_data.drop('Check', axis=1)
 
     return all_install_data
 
@@ -367,25 +396,36 @@ def check_fraud_install(con_engine, data):
     return data
 
 
-def take_all_orderplace_base_on_date(con_engine, start, end):
-    start = start.isoformat(' ')
-    end = end.isoformat(' ')
+# def take_all_purchase_base_on_date(con_engine, start, end):
+#     start = start.isoformat(' ')
+#     end = end.isoformat(' ')
+#
+#     with con_engine.connect() as cursor:
+#         all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
+#
+#     all_orderplace_data = all_orderplace_data[
+#         (all_orderplace_data['Event Time'] >= start) &
+#         (all_orderplace_data['Event Time'] <= end)
+#         ]
+#
+#     return all_orderplace_data
 
-    with con_engine.connect() as cursor:
-        all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
 
-    all_orderplace_data = all_orderplace_data[
-        (all_orderplace_data['Event Time'] >= start) &
-        (all_orderplace_data['Event Time'] <= end)
-        ]
+def download_report(con_engine, start, end, media):
+    if isinstance(start,str) and isinstance(end,str) and isinstance(media,str):
+        start = datetime.strptime(start, '%d-%m-%Y')
+        end = datetime.strptime(end, '%d-%m-%Y')
+        media = ast.literal_eval(media)
+        media = pd.DataFrame({'Media Source': media})
+        # print(start)
+        # print(end)
+        # print(media)
+        # media = pd.Series(media)
+    else :
+        start = start.isoformat(' ')
+        end = end.isoformat(' ')
+        media = pd.DataFrame({'Media Source': media})
 
-    return all_orderplace_data
-
-def download_report(con_engine, start, end):
-    start = datetime.strptime(start,'%d-%m-%Y')
-    end = datetime.strptime(end,'%d-%m-%Y')
-
-    # print(start+'\n'+end)
     with con_engine.connect() as cursor:
         all_install_data = pd.read_sql(""" SELECT * FROM install """, cursor)
         all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
@@ -393,12 +433,6 @@ def download_report(con_engine, start, end):
 
     table = all_orderplace_data.join(all_validation_data)
     table = table.drop(columns='Checkout_ID')
-    data = pd.pivot_table(
-        table, columns='Buyer Status',
-        index=['Fraud Status', 'Checkout Status'],
-        aggfunc=[len],
-        values='Checkout ID',
-        fill_value=np.NAN)
 
     install_data = all_install_data.drop(columns='Is Retargeting')
     table = table.merge(install_data, how='left', on='AppsFlyer ID')
@@ -424,15 +458,72 @@ def download_report(con_engine, start, end):
                    'Original URL',
                    'Fraud Status',
                    'Fraud Reason']]
-
+    # print(table)
     table = table.drop_duplicates(subset=['AppsFlyer ID', 'Checkout ID', 'Order_SN'])
+    print(table)
     table['Event Time'] = pd.to_datetime(table['Event Time'])
+    # print(table)
     table = table[
         (table['Event Time'] >= start) &
         (table['Event Time'] <= end)
         ]
-
+    # print(table)
+    table = table.merge(media, on=['Media Source'], indicator='Check', how='left')
+    # print(table)
+    table['Check'] = np.where(table['Check'] == 'both', True, False)
+    # print(table)
+    table = table[table['Check'] == True]
+    table = table.drop('Check', axis=1)
+    # print(table)
     # writer = pd.ExcelWriter('report.xlsx')
     # table.to_excel(writer, 'Data', index=False)
 
     return table
+
+
+def update_if_install_uploaded(con_engine):
+    with con_engine.connect() as cursor:
+        all_fraud_data = pd.read_sql(""" SELECT * FROM fraud """, cursor)
+        all_install_data = pd.read_sql(""" SELECT * FROM install """, cursor)
+        all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
+
+    all_orderplace_data = all_orderplace_data.drop(columns=['Fraud Status', 'Fraud Reason'])
+    all_orderplace_data = all_orderplace_data.merge(all_fraud_data, on=['AppsFlyer ID'], indicator='Fraud Status', how='left')
+    all_orderplace_data['Fraud Status'] = np.where(all_orderplace_data['Fraud Status'] == 'both', True, False)
+
+    all_install_data = all_install_data[['AppsFlyer ID',
+                                         'CTIT Status',
+                                         'Device Status',
+                                         'App Version Status']]
+
+    all_orderplace_data = all_orderplace_data.merge(all_install_data, on=['AppsFlyer ID'], how='left')
+    all_orderplace_data[['CTIT Status']] = all_orderplace_data['CTIT Status'].fillna(False)
+    all_orderplace_data[['Device Status']] = all_orderplace_data['Device Status'].fillna(False)
+    all_orderplace_data[['App Version Status']] = all_orderplace_data['App Version Status'].fillna(False)
+
+    all_orderplace_data['Fraud Reason'] = ""
+    for index, row in all_orderplace_data.iterrows():
+        s = ''
+        if row['CTIT Status'] and s:
+            s += "CTIT Problem"
+        elif row['CTIT Status']:
+            s += "CTIT Problem"
+
+        if row['Device Status'] and s:
+            s += ", Device Problem"
+        elif row['Device Status']:
+            s += "Device Problem"
+
+        if row['App Version Status'] and s:
+            s += ", App Version Problem"
+        elif row['App Version Status']:
+            s += "App Version Problem"
+
+        all_orderplace_data.at[index, 'Fraud Reason'] = s
+
+    all_orderplace_data = all_orderplace_data.drop(columns=['CTIT Status', 'Device Status', 'App Version Status'])
+    # all_orderplace_data = all_orderplace_data.append(all_orderplace_data)
+    all_orderplace_data = all_orderplace_data.drop_duplicates(keep='last')
+    all_orderplace_data.to_sql(name='orderplace', con=con_engine, if_exists='replace', index=False)
+
+
