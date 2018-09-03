@@ -10,5 +10,6 @@ urlpatterns = [
     path('upload-validation/', views.upload_bi_validation, name='upload_bi_validation'),
     path('alldata/', views.alldata, name='alldata'),
     path('download_all/', views.download_file_all, name='download'),
-    path('config/', views.config, name='config')
+    path('config/', views.config, name='config'),
+    path('add-update/', views.app_update, name='app_update')
 ]

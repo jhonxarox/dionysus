@@ -120,7 +120,7 @@ def install_app_version_check(raw_data, con_engine, platform):
         all_config_data = pd.read_sql(""" SELECT * FROM config """, cursor)
 
     for index, row in all_config_data.iterrows():
-        if row['Config']=="App Time":
+        if row['Config'] == "App Time":
             App_Time = row.at['Value']
 
     time = pd.to_datetime(raw_data['Install Time'])
@@ -411,7 +411,7 @@ def check_fraud_install(con_engine, data):
 
 
 def download_report(con_engine, start, end, media):
-    if isinstance(start,str) and isinstance(end,str) and isinstance(media,str):
+    if isinstance(start, str) and isinstance(end, str) and isinstance(media, str):
         start = datetime.strptime(start, '%d-%m-%Y')
         end = datetime.strptime(end, '%d-%m-%Y')
         media = ast.literal_eval(media)
@@ -420,7 +420,7 @@ def download_report(con_engine, start, end, media):
         # print(end)
         # print(media)
         # media = pd.Series(media)
-    else :
+    else:
         start = start.isoformat(' ')
         end = end.isoformat(' ')
         media = pd.DataFrame({'Media Source': media})
@@ -487,7 +487,8 @@ def update_if_install_uploaded(con_engine):
         all_orderplace_data = pd.read_sql(""" SELECT * FROM orderplace """, cursor)
 
     all_orderplace_data = all_orderplace_data.drop(columns=['Fraud Status', 'Fraud Reason'])
-    all_orderplace_data = all_orderplace_data.merge(all_fraud_data, on=['AppsFlyer ID'], indicator='Fraud Status', how='left')
+    all_orderplace_data = all_orderplace_data.merge(all_fraud_data, on=['AppsFlyer ID'], indicator='Fraud Status',
+                                                    how='left')
     all_orderplace_data['Fraud Status'] = np.where(all_orderplace_data['Fraud Status'] == 'both', True, False)
 
     all_install_data = all_install_data[['AppsFlyer ID',
@@ -525,7 +526,37 @@ def update_if_install_uploaded(con_engine):
     all_orderplace_data = all_orderplace_data.drop_duplicates(keep='last')
     all_orderplace_data.to_sql(name='orderplace', con=con_engine, if_exists='replace', index=False)
 
+
 def get_config(con_engine):
     with con_engine.connect() as cursor:
         all_config_data = pd.read_sql(""" SELECT * FROM config """, cursor)
     return all_config_data
+
+
+def update_config(con_engine, new_all_config_data):
+    with con_engine.connect() as cursor:
+        all_config_data = pd.read_sql(""" SELECT * FROM config """, cursor)
+    new_all_config_data = all_config_data.append(new_all_config_data)
+    new_all_config_data = new_all_config_data.drop_duplicates(subset='Config', keep='last')
+    new_all_config_data.to_sql(name='config', con=con_engine, if_exists='replace', index=False)
+
+
+def take_app_platform(con_engine):
+    with con_engine.connect() as cursor:
+        appversion = pd.read_sql(""" SELECT * 
+                                     FROM appversion """, cursor)
+    appversion = appversion.drop(columns=['App Version', 'Date Release']).drop_duplicates(
+        subset='Platform').reset_index(drop=True)
+    appversion = appversion['Platform'].astype(str)
+    return appversion
+
+
+def add_new_app_version(con_engine, platform, version, date):
+    date = date.replace(tzinfo=None)
+    new = {'Platform': platform, 'App Version': version, 'Date Release': date}
+    with con_engine.connect() as cursor:
+        appversion = pd.read_sql(""" SELECT * 
+                                        FROM appversion """, cursor)
+    appversion = appversion.append(new, ignore_index=True)
+    appversion = appversion.drop_duplicates(keep='last', subset=['Platform', 'App Version'])
+    appversion.to_sql(name='appversion', con=con_engine, if_exists='replace', index=False)

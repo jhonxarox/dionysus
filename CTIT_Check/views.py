@@ -30,7 +30,7 @@ def index(request):
                 install_fraud_pecentage = round(install_fraud_pecentage, 2)
 
                 all_purchase_base_on_date = download_report(connection_engine(), start_date,
-                                                                               end_date, media_sources)
+                                                            end_date, media_sources)
                 purchase_total = len(all_purchase_base_on_date)
                 purchase_fraud = len(all_purchase_base_on_date[all_purchase_base_on_date['Fraud Status'] == True])
                 purchase_fraud_pecentage = (purchase_fraud / purchase_total) * 100
@@ -92,7 +92,7 @@ def index(request):
                                                       'trust_valid_repeat': trust_valid_repeat,
                                                       'trust_invalid_new': trust_invalid_new,
                                                       'trust_invalid_repeat': trust_invalid_repeat,
-                                                      'trust_pending_new' : trust_pending_new,
+                                                      'trust_pending_new': trust_pending_new,
                                                       'trust_pending_repeat': trust_pending_repeat,
 
                                                       'suspec_valid_new': suspec_valid_new,
@@ -228,9 +228,11 @@ def download_file_all(request):
 
 
 def config(request):
+    con_engine = connection_engine()
+    all_config_data = get_config(con_engine)
+    app_platform = take_app_platform(con_engine)
     if "GET" == request.method:
-        con_engine = connection_engine()
-        all_config_data = get_config(con_engine)
+        status = False
         for index, row in all_config_data.iterrows():
             if row['Config'] == "CTIT Time":
                 CTIT_Time = row.at['Value']
@@ -249,30 +251,118 @@ def config(request):
                                                'device_status': device_status,
                                                'App_Time': App_Time,
                                                'app_status': app_status,
-                                               'Minimal_Device': Minimal_Device})
-
+                                               'Minimal_Device': Minimal_Device,
+                                               'app_platform': app_platform,
+                                               'status': status})
     elif "POST" == request.method:
+        status = True
+        form = updateConfig(request.POST)
+        if form.is_valid():
+            CTIT_Time = form.cleaned_data['ctit']
+            CTIT_status = form.cleaned_data['ctit_status']
+            Device_Time = form.cleaned_data['device']
+            device_status = form.cleaned_data['device_status']
+            App_Time = form.cleaned_data['app']
+            app_status = form.cleaned_data['app_status']
+            Minimal_Device = form.cleaned_data['device_number']
+            for index, row in all_config_data.iterrows():
+                if row['Config'] == "CTIT Time":
+                    all_config_data.at[index, 'Value'] = CTIT_Time
+                    all_config_data.at[index, 'Use'] = CTIT_status
+
+                elif row['Config'] == "Device Time":
+                    all_config_data.at[index, 'Value'] = Device_Time
+                    all_config_data.at[index, 'Use'] = device_status
+
+                elif row['Config'] == "App Time":
+                    all_config_data.at[index, 'Value'] = App_Time
+                    all_config_data.at[index, 'Use'] = app_status
+
+                elif row['Config'] == "Minimal Device":
+                    all_config_data.at[index, 'Value'] = Minimal_Device
+
+            update_config(con_engine, all_config_data)
+            return render(request, 'config.html', {'CTIT_Time': CTIT_Time,
+                                                   'CTIT_status': CTIT_status,
+                                                   'Device_Time': Device_Time,
+                                                   'device_status': device_status,
+                                                   'App_Time': App_Time,
+                                                   'app_status': app_status,
+                                                   'Minimal_Device': Minimal_Device,
+                                                   'app_platform': app_platform,
+                                                   'status': True})
+        else:
+            for index, row in all_config_data.iterrows():
+                if row['Config'] == "CTIT Time":
+                    CTIT_Time = row.at['Value']
+                    CTIT_status = row.at['Use']
+                elif row['Config'] == "Device Time":
+                    Device_Time = row.at['Value']
+                    device_status = row.at['Use']
+                elif row['Config'] == "App Time":
+                    App_Time = row.at['Value']
+                    app_status = row.at['Use']
+                elif row['Config'] == "Minimal Device":
+                    Minimal_Device = row.at['Value']
+            return render(request, 'config.html', {'CTIT_Time': CTIT_Time,
+                                                   'CTIT_status': CTIT_status,
+                                                   'Device_Time': Device_Time,
+                                                   'device_status': device_status,
+                                                   'App_Time': App_Time,
+                                                   'app_status': app_status,
+                                                   'Minimal_Device': Minimal_Device,
+                                                   'app_platform': app_platform,
+                                                   'status': status})
+    else:
         return render(request, 'config.html', {})
 
-    else :
-        return render(request, 'config.html', {})
+def app_update(request):
+    con_engine = connection_engine()
+    all_config_data = get_config(con_engine)
+    app_platform = take_app_platform(con_engine)
+    for index, row in all_config_data.iterrows():
+        if row['Config'] == "CTIT Time":
+            CTIT_Time = row.at['Value']
+            CTIT_status = row.at['Use']
+        elif row['Config'] == "Device Time":
+            Device_Time = row.at['Value']
+            device_status = row.at['Use']
+        elif row['Config'] == "App Time":
+            App_Time = row.at['Value']
+            app_status = row.at['Use']
+        elif row['Config'] == "Minimal Device":
+            Minimal_Device = row.at['Value']
+    if "POST" == request.method:
+        form = addAppVersion(request.POST)
+        if form.is_valid():
+            platform = form.cleaned_data['app_platform']
+            version = form.cleaned_data['app_version']
+            date = form.cleaned_data['release_date']
+            add_new_app_version(con_engine, platform, version, date)
 
+            return render(request, 'config.html', {'CTIT_Time': CTIT_Time,
+                                               'CTIT_status': CTIT_status,
+                                               'Device_Time': Device_Time,
+                                               'device_status': device_status,
+                                               'App_Time': App_Time,
+                                               'app_status': app_status,
+                                               'Minimal_Device': Minimal_Device,
+                                               'app_platform': app_platform})
 
- # all_new_buyer_base_on_date = take_new_buyer_base_on_date(connection_engine(), start_date, end_date)
-                # new_buyer_total = len(all_new_buyer_base_on_date)
-                #
-                # new_buyer_valid_total = len(
-                #     all_new_buyer_base_on_date[all_new_buyer_base_on_date['Checkout Status'] == "Valid"])
-                # new_buyer_valid_total_percentage = (new_buyer_valid_total / new_buyer_total) * 100
-                # new_buyer_valid_total_percentage = round(new_buyer_valid_total_percentage, 2)
-                #
-                # new_buyer_invalid_total = len(
-                #     all_new_buyer_base_on_date[all_new_buyer_base_on_date['Checkout Status'] == "Invalid"])
-                # new_buyer_invalid_percentage = (new_buyer_invalid_total / new_buyer_total) * 100
-                # new_buyer_invalid_percentage = round(new_buyer_invalid_percentage, 2)
+        return render(request, 'config.html', {'CTIT_Time': CTIT_Time,
+                                               'CTIT_status': CTIT_status,
+                                               'Device_Time': Device_Time,
+                                               'device_status': device_status,
+                                               'App_Time': App_Time,
+                                               'app_status': app_status,
+                                               'Minimal_Device': Minimal_Device,
+                                               'app_platform': app_platform})
 
-# 'new_buyer_total': new_buyer_total,
-# 'new_buyer_valid_total': new_buyer_valid_total,
-# 'new_buyer_valid_total_percentage': new_buyer_valid_total_percentage,
-# 'new_buyer_invalid_total': new_buyer_invalid_total,
-# 'new_buyer_invalid_percentage': new_buyer_invalid_percentage,
+    return render(request, 'config.html', {'CTIT_Time': CTIT_Time,
+                                               'CTIT_status': CTIT_status,
+                                               'Device_Time': Device_Time,
+                                               'device_status': device_status,
+                                               'App_Time': App_Time,
+                                               'app_status': app_status,
+                                               'Minimal_Device': Minimal_Device,
+                                               'app_platform': app_platform})

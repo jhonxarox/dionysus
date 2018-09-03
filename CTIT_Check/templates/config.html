@@ -11,7 +11,7 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Configuration</h3>
                     <div class="panel-body">
-                        <form action="/config/" method="post" name="getdataform" id="getdataform">
+                        <form action="/config/" method="post" name="configform" id="configform">
                             {% csrf_token %}
                             {{ form }}
                             <div class="row">
@@ -50,7 +50,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-2"><p class="text-right">Minimal Device</p></div>
-                                <div class="col-md-2"><input type="number" name="device" value={{ Minimal_Device }}></div>
+                                <div class="col-md-2"><input type="number" name="device_number" value={{ Minimal_Device }}></div>
                             </div>
                             <div class="row">
                                 <div class="col-md-2"><p class="text-right">App Version Time </p></div>
@@ -84,7 +84,7 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Add New App Version</h3>
                     <div class="panel-body">
-                        <form action="/config" method="post" name="getdataform" id="">
+                        <form action="/add-update/" method="post" name="appversionform" id="appversionform">
                             {% csrf_token %}
                             {{ form }}
                             <div class="row">
@@ -94,12 +94,14 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-2">
-                                    <select class="form-control">
-                                        <option value="Test">Test</option>
+                                    <select class="form-control" name="app_platform" id="app_platform">
+                                        {% for platform in app_platform %}
+											<option value="{{ platform }}">{{ platform }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
-                                <div class="col-md-2"><input type="text" name="ctit" class="form-control"></div>
-                                <div class="col-md-2"><input type="date" name="end_date" id="release_date"></div>
+                                <div class="col-md-2"><input type="text" name="app_version" id="app_version" class="form-control"></div>
+                                <div class="col-md-2"><input type="date" name="release_date" id="release_date"></div>
                                 <div class="col-md-2">
                                     <input type="submit" class="btn btn-primary btn-block s">
                                 </div>

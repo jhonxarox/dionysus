@@ -23,15 +23,22 @@ class download(forms.Form):
 
 
 class updateConfig(forms.Form):
-    ctit = forms.NumberInput()
+    ctit = forms.DecimalField()
     ctit_status = forms.BooleanField(required=False)
 
-    device_time = forms.NumberInput()
+    device = forms.DecimalField()
     device_status = forms.BooleanField(required=False)
-    device_number = forms.NumberInput()
+    device_number = forms.DecimalField()
 
-    app = forms.NumberInput()
+    app = forms.DecimalField()
     app_status = forms.BooleanField(required=False)
 
-# class addAppVersion(forms.Form):
-#     options =
+
+class addAppVersion(forms.Form):
+    options = take_app_platform(connection_engine())
+    option = ()
+    for data in options:
+        option = option + ((data, data),)
+    app_platform = forms.ChoiceField(choices=option)
+    app_version = forms.CharField()
+    release_date = forms.DateTimeField()
