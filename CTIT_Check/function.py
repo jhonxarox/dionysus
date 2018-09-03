@@ -54,9 +54,8 @@ def install_read_csv(csv_filename):
 
 
 # CTIT Check on raw data
-def install_ctit_check(raw_data):
-
-    with connection_engine().connect as cursor:
+def install_ctit_check(raw_data, con_engine):
+    with con_engine.connect() as cursor:
         all_config_data = pd.read_sql(""" SELECT * FROM config """, cursor)
 
     for index, row in all_config_data.iterrows():
@@ -526,4 +525,7 @@ def update_if_install_uploaded(con_engine):
     all_orderplace_data = all_orderplace_data.drop_duplicates(keep='last')
     all_orderplace_data.to_sql(name='orderplace', con=con_engine, if_exists='replace', index=False)
 
-
+def get_config(con_engine):
+    with con_engine.connect() as cursor:
+        all_config_data = pd.read_sql(""" SELECT * FROM config """, cursor)
+    return all_config_data

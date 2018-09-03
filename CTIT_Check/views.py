@@ -140,7 +140,7 @@ def upload_install(request):
     con_engine = connection_engine()
     raw_data = install_read_csv(csv_file)
     platform = install_check_platform(raw_data)
-    ctit_result = install_ctit_check(raw_data)
+    ctit_result = install_ctit_check(raw_data, con_engine)
     device_result = install_device_check(ctit_result, con_engine)
     data = install_app_version_check(device_result, con_engine, platform)
     fraud_data = install_fraud_check(data)
@@ -228,7 +228,34 @@ def download_file_all(request):
 
 
 def config(request):
-    return render(request, 'config.html', {})
+    if "GET" == request.method:
+        con_engine = connection_engine()
+        all_config_data = get_config(con_engine)
+        for index, row in all_config_data.iterrows():
+            if row['Config'] == "CTIT Time":
+                CTIT_Time = row.at['Value']
+                CTIT_status = row.at['Use']
+            elif row['Config'] == "Device Time":
+                Device_Time = row.at['Value']
+                device_status = row.at['Use']
+            elif row['Config'] == "App Time":
+                App_Time = row.at['Value']
+                app_status = row.at['Use']
+            elif row['Config'] == "Minimal Device":
+                Minimal_Device = row.at['Value']
+        return render(request, 'config.html', {'CTIT_Time': CTIT_Time,
+                                               'CTIT_status': CTIT_status,
+                                               'Device_Time': Device_Time,
+                                               'device_status': device_status,
+                                               'App_Time': App_Time,
+                                               'app_status': app_status,
+                                               'Minimal_Device': Minimal_Device})
+
+    elif "POST" == request.method:
+        return render(request, 'config.html', {})
+
+    else :
+        return render(request, 'config.html', {})
 
 
  # all_new_buyer_base_on_date = take_new_buyer_base_on_date(connection_engine(), start_date, end_date)

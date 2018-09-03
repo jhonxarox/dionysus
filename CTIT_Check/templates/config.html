@@ -11,7 +11,7 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">Configuration</h3>
                     <div class="panel-body">
-                        <form action="/config" method="post" name="getdataform" id="getdataform">
+                        <form action="/config/" method="post" name="getdataform" id="getdataform">
                             {% csrf_token %}
                             {{ form }}
                             <div class="row">
@@ -20,37 +20,49 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-2"><p class="text-right">CTIT Time </p></div>
-                                <div class="col-md-2"><input type="number" name="ctit" value=20></div>
+                                <div class="col-md-2"><input type="number" name="ctit" value={{ CTIT_Time }}></div>
                                 <div class="col-md-1"><p>Seconds</p></div>
                                 <div class="col-md-1">
                                     <label class="fancy-checkbox text-center">
-                                        <input type="checkbox">
+                                        {% if CTIT_status %}
+                                        <input type="checkbox" name="ctit_status" checked>
+                                        {% else %}
+                                        <input type="checkbox" name="ctit_status">
+                                        {% endif %}
                                         <span></span>
                                     </label>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-2"><p class="text-right">Device Time </p></div>
-                                <div class="col-md-2"><input type="number" name="device" value=30></div>
+                                <div class="col-md-2"><input type="number" name="device" value={{ Device_Time }}></div>
                                 <div class="col-md-1"><p>Days</p></div>
                                 <div class="col-md-1">
                                     <label class="fancy-checkbox text-center">
-                                        <input type="checkbox">
+                                        {% if device_status %}
+                                        <input type="checkbox" name="device_status"  checked>
+                                        {% else %}
+                                        <input type="checkbox" name="device_status">
+                                        {% endif %}
                                         <span></span>
                                     </label>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-2"><p class="text-right">Minimal Device</p></div>
-                                <div class="col-md-2"><input type="number" name="device" value=30></div>
+                                <div class="col-md-2"><input type="number" name="device" value={{ Minimal_Device }}></div>
                             </div>
                             <div class="row">
                                 <div class="col-md-2"><p class="text-right">App Version Time </p></div>
-                                <div class="col-md-2"><input type="number" name="app" value=30></div>
+                                <div class="col-md-2"><input type="number" name="app" value={{ App_Time }}></div>
                                 <div class="col-md-1"><p>Days</p></div>
                                 <div class="col-md-1">
                                     <label class="fancy-checkbox text-center">
-                                        <input type="checkbox">
+                                        {% if app_status %}
+                                        <input type="checkbox" name="app_status" checked>
+                                        {% else %}
+                                        <input type="checkbox" name="app_status">
+                                        {% endif %}
                                         <span></span>
                                     </label>
                                 </div>
@@ -70,7 +82,7 @@
             <!--ADD APP VERSION-->
             <div class="panel panel-headline">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Configuration</h3>
+                    <h3 class="panel-title">Add New App Version</h3>
                     <div class="panel-body">
                         <form action="/config" method="post" name="getdataform" id="">
                             {% csrf_token %}

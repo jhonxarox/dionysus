@@ -24,9 +24,14 @@ class download(forms.Form):
 
 class updateConfig(forms.Form):
     ctit = forms.NumberInput()
-    device = forms.NumberInput()
-    app = forms.NumberInput()
+    ctit_status = forms.BooleanField(required=False)
 
+    device_time = forms.NumberInput()
+    device_status = forms.BooleanField(required=False)
+    device_number = forms.NumberInput()
+
+    app = forms.NumberInput()
+    app_status = forms.BooleanField(required=False)
 
 # class addAppVersion(forms.Form):
 #     options =
