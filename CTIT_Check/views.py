@@ -128,16 +128,44 @@ def index(request):
 
 
 def upload_install(request):
+    con_engine = connection_engine()
+    all_config_data = get_config(con_engine)
+    for index, row in all_config_data.iterrows():
+        if row['Config'] == "CTIT Time":
+            CTIT_Time = row.at['Value']
+            CTIT_status = row.at['Use']
+        elif row['Config'] == "Device Time":
+            Device_Time = row.at['Value']
+            device_status = row.at['Use']
+        elif row['Config'] == "App Time":
+            App_Time = row.at['Value']
+            app_status = row.at['Use']
+        elif row['Config'] == "Minimal Device":
+            Minimal_Device = row.at['Value']
+
     if "GET" == request.method:
         status = False
-        return render(request, 'upload-install.html', {'status': status})
+        return render(request, 'upload-install.html', {'status': status,
+                                                       'CTIT_Time': CTIT_Time,
+                                                       'CTIT_status': CTIT_status,
+                                                       'Device_Time': Device_Time,
+                                                       'device_status': device_status,
+                                                       'App_Time': App_Time,
+                                                       'app_status': app_status,
+                                                       'Minimal_Device': Minimal_Device,})
 
     csv_file = request.FILES['csv_file']
 
     if not (csv_file.name.endswith('.csv')):
-        return render(request, 'upload-install.html', {'message': "Please Upload CSV file!"})
+        return render(request, 'upload-install.html', {'CTIT_Time': CTIT_Time,
+                                                       'CTIT_status': CTIT_status,
+                                                       'Device_Time': Device_Time,
+                                                       'device_status': device_status,
+                                                       'App_Time': App_Time,
+                                                       'app_status': app_status,
+                                                       'Minimal_Device': Minimal_Device,
+                                                       'message': "Please Upload CSV file!"})
 
-    con_engine = connection_engine()
     raw_data = install_read_csv(csv_file)
     platform = install_check_platform(raw_data)
     ctit_result = install_ctit_check(raw_data, con_engine)
@@ -148,7 +176,15 @@ def upload_install(request):
     install_insert_fraud_to_db(fraud_data, con_engine)
     update_if_install_uploaded(con_engine)
     status = True
-    return render(request, 'upload-install.html', {'status': status, 'message': "Upload Success"})
+    return render(request, 'upload-install.html', {'status': status,
+                                                   'CTIT_Time': CTIT_Time,
+                                                   'CTIT_status': CTIT_status,
+                                                   'Device_Time': Device_Time,
+                                                   'device_status': device_status,
+                                                   'App_Time': App_Time,
+                                                   'app_status': app_status,
+                                                   'Minimal_Device': Minimal_Device,
+                                                   'message': "Upload Success"})
 
 
 def upload_orderplace(request):

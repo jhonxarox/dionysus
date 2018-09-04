@@ -18,6 +18,33 @@
 									<span class="input-group-btn"><input type="submit" class="btn btn-primary" value="Upload"/></span>
 								</div>
 							</form>
+							<div class="row">
+								<p>Filter :</p>
+								<ul style="list-style-type:none">
+									{% if CTIT_status %}
+									<li class="row">
+										<div class="col-md-4">CTIT Check -> {{ CTIT_Time }} seconds</div>
+									</li>
+									{% endif %}
+									{% if device_status %}
+									<li class="row">
+										<div class="col-md-2">Device Check</div>
+									</li>
+									{% endif %}
+									{% if app_status %}
+									<li class="row">
+										<div class="col-md-2">App Version Check</div>
+									</li>
+									{% endif %}
+									<li class="row">
+										<div class="col-md-3">
+											<p class="text-right">
+												<a href="/config/">[Change]</a>
+											</p>
+										</div>
+									</li>
+								</ul>
+							</div>
 							{% if status %}
 							<div class="alert alert-success alert-dismissible" role="alert">
 								<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>

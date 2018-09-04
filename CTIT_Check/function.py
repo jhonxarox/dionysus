@@ -61,20 +61,22 @@ def install_ctit_check(raw_data, con_engine):
     for index, row in all_config_data.iterrows():
         if row['Config'] == "CTIT Time":
             minimal_time_check_CTIT = row.at['Value']
+            ctit_status = row.at['Use']
             break
 
     raw_data['CTIT Status'] = False
-    for index, row in raw_data.iterrows():
-        if not isinstance(row['Attributed Touch Time'], str) and math.isnan(row['Attributed Touch Time']):
-            installTime = datetime.strptime(row['Install Time'], '%Y-%m-%d %H:%M:%S')
-            attributeTouchTime = installTime - dt.timedelta(seconds=minimal_time_check_CTIT)
-        else:
-            attributeTouchTime = datetime.strptime(row['Attributed Touch Time'], '%Y-%m-%d %H:%M:%S')
-            installTime = datetime.strptime(row['Install Time'], '%Y-%m-%d %H:%M:%S')
+    if ctit_status:
+        for index, row in raw_data.iterrows():
+            if not isinstance(row['Attributed Touch Time'], str) and math.isnan(row['Attributed Touch Time']):
+                installTime = datetime.strptime(row['Install Time'], '%Y-%m-%d %H:%M:%S')
+                attributeTouchTime = installTime - dt.timedelta(seconds=minimal_time_check_CTIT)
+            else:
+                attributeTouchTime = datetime.strptime(row['Attributed Touch Time'], '%Y-%m-%d %H:%M:%S')
+                installTime = datetime.strptime(row['Install Time'], '%Y-%m-%d %H:%M:%S')
 
-        time_reduce = installTime - attributeTouchTime
-        if time_reduce.total_seconds() < minimal_time_check_CTIT:
-            raw_data.at[index, 'CTIT Status'] = True
+            time_reduce = installTime - attributeTouchTime
+            if time_reduce.total_seconds() < minimal_time_check_CTIT:
+                raw_data.at[index, 'CTIT Status'] = True
     return raw_data
 
 
@@ -89,25 +91,29 @@ def install_device_check(raw_data, con_engine):
     for index, row in all_config_data.iterrows():
         if row['Config'] == "Device Time":
             minimal_time_check_device = row.at['Value']
+            device_status = row.at['Use']
         elif row['Config'] == "Minimal Device":
             minimal_device = row.at['Value']
 
-    white_list_device['Attributed Touch Time'] = pd.to_datetime(white_list_device['Attributed Touch Time'])
-    white_list_device = white_list_device[
-        white_list_device['Attributed Touch Time']
-        > dt.datetime.now() - dt.timedelta(days=minimal_time_check_device)]
+    if device_status:
+        white_list_device['Attributed Touch Time'] = pd.to_datetime(white_list_device['Attributed Touch Time'])
+        white_list_device = white_list_device[
+            white_list_device['Attributed Touch Time']
+            > dt.datetime.now() - dt.timedelta(days=minimal_time_check_device)]
 
-    if white_list_device.empty:
-        white_list_device = raw_data[['Attributed Touch Time', 'Device Type']]
+        if white_list_device.empty:
+            white_list_device = raw_data[['Attributed Touch Time', 'Device Type']]
 
-    white_list_device['Attributed Touch Time'] = pd.to_datetime(white_list_device['Attributed Touch Time'])
-    white_list_device['Total Device'] = 0
-    white_list_device = white_list_device.groupby('Device Type', as_index=False)['Total Device'].count()
-    white_list_device = white_list_device[white_list_device['Total Device'] > minimal_device]
+        white_list_device['Attributed Touch Time'] = pd.to_datetime(white_list_device['Attributed Touch Time'])
+        white_list_device['Total Device'] = 0
+        white_list_device = white_list_device.groupby('Device Type', as_index=False)['Total Device'].count()
+        white_list_device = white_list_device[white_list_device['Total Device'] > minimal_device]
 
-    raw_data = raw_data.merge(white_list_device, on=['Device Type'], indicator='Device Status', how='left')
-    raw_data = raw_data.drop('Total Device', axis=1)
-    raw_data['Device Status'] = np.where(raw_data['Device Status'] == 'both', False, True)
+        raw_data = raw_data.merge(white_list_device, on=['Device Type'], indicator='Device Status', how='left')
+        raw_data = raw_data.drop('Total Device', axis=1)
+        raw_data['Device Status'] = np.where(raw_data['Device Status'] == 'both', False, True)
+    else:
+        raw_data['Device Status'] = False
 
     return raw_data
 
@@ -122,41 +128,37 @@ def install_app_version_check(raw_data, con_engine, platform):
     for index, row in all_config_data.iterrows():
         if row['Config'] == "App Time":
             App_Time = row.at['Value']
+            app_status = row.at['Use']
 
-    time = pd.to_datetime(raw_data['Install Time'])
-    time = pd.to_datetime(time)
-    time = time.sort_values()
-    time = time.reset_index(drop=True)
+    if app_status:
+        time = pd.to_datetime(raw_data['Install Time'])
+        time = pd.to_datetime(time)
+        time = time.sort_values()
+        time = time.reset_index(drop=True)
 
-    start = time.iloc[0].to_pydatetime()
-    end = time.iloc[-1].to_pydatetime()
+        start = time.iloc[0].to_pydatetime()
+        end = time.iloc[-1].to_pydatetime()
 
-    appversion = appversion[appversion['Platform'] == platform]
-    appversion['Date Release'] = pd.to_datetime(appversion['Date Release'])
-    appversion = appversion.sort_values('Date Release')
-    appversion = appversion.reset_index(drop=True)
+        appversion = appversion[appversion['Platform'] == platform]
+        appversion['Date Release'] = pd.to_datetime(appversion['Date Release'])
+        appversion = appversion.sort_values('Date Release')
+        appversion = appversion.reset_index(drop=True)
 
-    appversion_on_range = appversion[
-        (appversion['Date Release'] <= end) &
-        (appversion['Date Release'] >= start - dt.timedelta(days=App_Time))]
+        appversion_on_range = appversion[
+            (appversion['Date Release'] <= end) &
+            (appversion['Date Release'] >= start - dt.timedelta(days=App_Time))]
 
-    if appversion_on_range.empty:
-        appversion = appversion.tail(1)
+        if appversion_on_range.empty:
+            appversion = appversion.tail(1)
+        else:
+            appversion = appversion_on_range
+
+        raw_data = raw_data.merge(appversion, on=['App Version'], indicator='App Version Status', how='left')
+        raw_data = raw_data.drop(['Platform_y', 'Date Release'], axis=1)
+        raw_data = raw_data.rename(columns={'Platform_x': 'Platform'})
+        raw_data['App Version Status'] = np.where(raw_data['App Version Status'] == 'both', False, True)
     else:
-        appversion = appversion_on_range
-
-    # lastrec = len(appversion.index) - 1
-    #
-    # if dt.datetime.now() <= appversion.iloc[lastrec]['Date Release'] + dt.timedelta(
-    #         days=minimal_time_check_app_version):
-    #     appversion = appversion.tail(2)
-    # else:
-    #     appversion = appversion.tail(1)
-
-    raw_data = raw_data.merge(appversion, on=['App Version'], indicator='App Version Status', how='left')
-    raw_data = raw_data.drop(['Platform_y', 'Date Release'], axis=1)
-    raw_data = raw_data.rename(columns={'Platform_x': 'Platform'})
-    raw_data['App Version Status'] = np.where(raw_data['App Version Status'] == 'both', False, True)
+        raw_data['App Version Status'] = False
     return raw_data
 
 
