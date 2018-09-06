@@ -112,6 +112,53 @@
             </div>
             <!--END ADD APP VERSION-->
             <div class="row">
+						<div class="col-md-6">
+							<!-- TASKS -->
+							<div class="panel">
+								<div class="panel-heading">
+									<h3 class="panel-title">Android</h3>
+									<div class="right">
+										<button type="button" class="btn-toggle-collapse"><i class="lnr lnr-chevron-up"></i></button>
+										<button type="button" class="btn-remove"><i class="lnr lnr-cross"></i></button>
+									</div>
+								</div>
+								<div class="panel-body">
+									<table class="table table-striped">
+										<tbody>
+											{% autoescape off %}
+                                               {{ android_ver }}
+                                            {% endautoescape %}
+										</tbody>
+									</table>
+								</div>
+							</div>
+							<!-- END TASKS -->
+						</div>
+						<div class="col-md-6">
+							<!-- TASKS -->
+							<div class="panel">
+								<div class="panel-heading">
+									<h3 class="panel-title">IOS</h3>
+									<div class="right">
+										<button type="button" class="btn-toggle-collapse"><i class="lnr lnr-chevron-up"></i></button>
+										<button type="button" class="btn-remove"><i class="lnr lnr-cross"></i></button>
+									</div>
+								</div>
+								<div class="panel-body">
+									<table class="table table-striped">
+										<tbody>
+											{% autoescape off %}
+                                               {{ ios_ver }}
+                                            {% endautoescape %}
+										</tbody>
+									</table>
+								</div>
+							</div>
+							<!-- END TASKS -->
+						</div>
+					</div>
+
+            <div class="row">
                 <div class="col-md-12">
                     <!-- START ERROR -->
                     <!--<div class="panel">-->

@@ -562,3 +562,10 @@ def add_new_app_version(con_engine, platform, version, date):
     appversion = appversion.append(new, ignore_index=True)
     appversion = appversion.drop_duplicates(keep='last', subset=['Platform', 'App Version'])
     appversion.to_sql(name='appversion', con=con_engine, if_exists='replace', index=False)
+
+
+def take_app_version(con_engine):
+    with con_engine.connect() as cursor:
+        appversion = pd.read_sql(""" SELECT * 
+                                        FROM appversion """, cursor)
+    return appversion

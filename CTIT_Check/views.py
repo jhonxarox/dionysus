@@ -271,6 +271,13 @@ def config(request):
     con_engine = connection_engine()
     all_config_data = get_config(con_engine)
     app_platform = take_app_platform(con_engine)
+    app_version = take_app_version(con_engine)
+    android = app_version[app_version['Platform']=="android"]
+    android_ver = android.to_html(index=False)
+    android_date = android.drop(columns=['Platform','App Version'])
+    ios = app_version[app_version['Platform']=="ios"]
+    ios_ver = ios.to_html(index=False)
+    ios_date = ios.drop(columns=['Platform','App Version'])
     if "GET" == request.method:
         status = False
         for index, row in all_config_data.iterrows():
@@ -293,6 +300,10 @@ def config(request):
                                                'app_status': app_status,
                                                'Minimal_Device': Minimal_Device,
                                                'app_platform': app_platform,
+                                               'android_ver': android_ver,
+                                               'android_date': android_date,
+                                               'ios_ver': ios_ver,
+                                               'ios_date': ios_date,
                                                'status': status})
     elif "POST" == request.method:
         status = True
@@ -330,6 +341,10 @@ def config(request):
                                                    'app_status': app_status,
                                                    'Minimal_Device': Minimal_Device,
                                                    'app_platform': app_platform,
+                                                   'android_ver': android_ver,
+                                                   'android_date': android_date,
+                                                   'ios_ver': ios_ver,
+                                                   'ios_date': ios_date,
                                                    'status': True})
         else:
             for index, row in all_config_data.iterrows():
@@ -352,6 +367,10 @@ def config(request):
                                                    'app_status': app_status,
                                                    'Minimal_Device': Minimal_Device,
                                                    'app_platform': app_platform,
+                                                   'android_ver': android_ver,
+                                                   'android_date': android_date,
+                                                   'ios_ver': ios_ver,
+                                                   'ios_date': ios_date,
                                                    'status': status})
     else:
         return render(request, 'config.html', {})
