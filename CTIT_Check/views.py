@@ -41,6 +41,7 @@ def index(request):
                 # -------------------------------------------SUSPECTED FRAUD-----------------------------------------
 
                 suspected_fraud = data.loc[data['Fraud Status'] == True]
+                total_suspected_fraud = len(suspected_fraud)
 
                 suspec_valid = suspected_fraud.loc[suspected_fraud['Checkout Status'] == "Valid"]
                 suspec_valid_new = len(suspec_valid.loc[suspec_valid['Buyer Status'] == "New"])
@@ -58,6 +59,7 @@ def index(request):
 
                 # -------------------------------------------TRUSTED INSTALL--------------------------------------------
                 trusted_install = data.loc[data['Fraud Status'] == False]
+                total_trusted_install = len(trusted_install)
 
                 trust_valid = trusted_install.loc[trusted_install['Checkout Status'] == "Valid"]
                 trust_valid_new = len(trust_valid.loc[trust_valid['Buyer Status'] == "New"])
@@ -94,6 +96,7 @@ def index(request):
                                                       'trust_invalid_repeat': trust_invalid_repeat,
                                                       'trust_pending_new': trust_pending_new,
                                                       'trust_pending_repeat': trust_pending_repeat,
+                                                      'total_trusted_install': total_trusted_install,
 
                                                       'suspec_valid_new': suspec_valid_new,
                                                       'suspec_valid_repeat': suspec_valid_repeat,
@@ -101,6 +104,7 @@ def index(request):
                                                       'suspec_invalid_repeat': suspec_invalid_repeat,
                                                       'suspec_pending_new': suspec_pending_new,
                                                       'suspec_pending_repeat': suspec_pending_repeat,
+                                                      'total_suspected_fraud':total_suspected_fraud,
 
                                                       'media_source': media_source,
                                                       'media_sources': media_sources,
