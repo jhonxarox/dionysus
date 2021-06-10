@@ -41,7 +41,7 @@ dask==0.18.2
 datashape==0.5.4
 decorator==4.3.0
 distributed==1.22.0
-Django==1.11.14
+Django==2.2.24
 django-bootstrap-ui==0.5.1
 django-mathfilters==0.4.0
 django-tag-parser==2.1
